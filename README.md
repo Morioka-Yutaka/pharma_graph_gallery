@@ -125,11 +125,40 @@ Purpose: Spaghetti plot of individual time-course profiles in a single group.
   
 ---
  
-## `%sg004()` macro <a name="sg004-macro-5"></a> ######
-
-Macro: SG004
-Purpose: Spaghetti plot of individual time-course profiles by group.
-
+## `%sg004` <a name="sg004-macro-5"></a> ######
+### Spaghetti plot of individual time-course profiles by group.
+<img width="608" height="325" alt="image" src="https://github.com/user-attachments/assets/bcaaf142-d6c1-445c-b84d-8b0a74b370d9" />
+~~~sas
+data wk1;
+call streaminit(777);
+do TRTAN=1,2;
+    do AVISITN= 1 to 10;
+        do i = 1 to 10;
+            subjid=cats(trtan,"-",i);
+            if trtan=1 then AVAL = rand("normal",110,3);
+            else AVAL = rand("normal",110,2);
+            output;
+        end;
+    end;
+end;
+run;
+ 
+ods graphics / 
+               noborder
+               noscale
+               width=780 px
+               height=410 px
+               attrpriority=none
+               imagefmt=png
+;
+proc sgplot data=wk1 noautolegend noborder;
+    series x=AVISITN y=AVAL /group=SUBJID markers markerattrs=(symbol=circlefilled color=blue size=5) lineattrs=(pattern=solid color=blue thickness=1) ;
+ 
+    xaxis offsetmin=0.05 offsetmax=0.05 values=(1 to 10 ) labelattrs=(size=10) label="Analisys Visit" type=linear;
+    yaxis offsetmax=0.05 labelattrs=(size=10) values=(90 to 120 by 5) label ="Analysis Value";
+ 
+run ;
+~~~
   
 ---
  
