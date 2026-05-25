@@ -11,9 +11,7 @@ Purpose: Execute existing SG001 to SG100 macros.
 ---
  
 ## `%sg001` macro <a name="sg001-macro-2"></a> ######
-
-Macro: SG001
-Purpose: Time-course plot of mean plus-minus SD in a single group.
+### Time-course plot of mean plus-minus SD in a single group.
 
 <img width="576" height="309" alt="image" src="https://github.com/user-attachments/assets/917af268-6d24-4151-92bf-40c0a47b6aa6" />
 
