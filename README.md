@@ -2,10 +2,14 @@
 Pharma_Graph_Gallery is a SAS package that provides a gallery of reusable graph SAS-code for pharmaceutical and clinical trial data visualization.  
 <img width="359" height="359" alt="pharma_graph_gallery_small" src="https://github.com/user-attachments/assets/adc1b56f-fa8d-4719-a715-73f4b41b961e" />
 
-## `%pharma_graph_gallery()` macro <a name="pharmagraphgallery-macro-1"></a> ######
+## `%pharma_graph_gallery` macro <a name="pharmagraphgallery-macro-1"></a> ######
 
 Macro: Pharma_Graph_Gallery
-Purpose: Execute existing SG001 to SG100 macros.
+Purpose: Show All Graphs and Codes.
+
+~~~sas
+%pharma_graph_gallery
+~~~
 
   
 ---
