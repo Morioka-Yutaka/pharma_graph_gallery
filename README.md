@@ -203,19 +203,127 @@ run ;
   
 ---
  
-## `%sg005()` macro <a name="sg005-macro-6"></a> ######
+## `%sg005`  <a name="sg005-macro-6"></a> ######
+### Spider plot of change from baseline by group.
 
-Macro: SG005
-Purpose: Spider plot of change from baseline by group.
+<img width="583" height="311" alt="image" src="https://github.com/user-attachments/assets/4c8a08a5-ca78-4e1f-a487-902af439b471" />
 
+~~~sas
+data wk1;
+call streaminit(777);
+do TRTAN=1,2;
+    do AVISITN= 1 to 10;
+        do i = 1 to 10;
+            subjid=cats(trtan,"-",i);
+            if trtan=1 then AVAL = rand("normal",110,3);
+            else AVAL = rand("normal",110,2);
+            output;
+        end;
+    end;
+end;
+run;
+data base;
+set wk1;
+where AVISITN = 1;
+BASE=AVAL;
+keep SUBJID BASE;
+run;
+data sds;
+set wk1;
+if 0 then set base;
+if _N_ = 1 then do;
+  declare hash h1(dataset:"base");
+  h1.definekey("SUBJID");
+  h1.definedata("BASE");
+  h1.definedone();
+end;
+if h1.find() ne 0  then call missing(of BASE);
+if n(AVAL,BASE)=2then CHG = AVAL - BASE;
+run;
+ 
+proc format ;
+value TRTAN 1="Active" 2="Placebo";
+run;
+ 
+ods graphics / reset
+               noborder
+               noscale
+               width=780 px
+               height=410 px
+               attrpriority=none
+               imagefmt=png
+;
+proc sgplot data=sds noautolegend noborder;
+    styleattrs datacontrastcolors=(blue red)
+    datasymbols=(circlefilled squarefilled) ;
+    series x=AVISITN y=CHG /group=SUBJID grouplc=TRTAN groupmc=TRTAN markers markerattrs=(size=5) lineattrs=(pattern=solid  thickness=1) name="series" ;
+    refline 0 /axis=y lineattrs=(color=gray thickness=2 pattern=dash);
+    xaxis offsetmin=0.05 offsetmax=0.05 values=(1 to 10 ) labelattrs=(size=10) label="Analisys Visit" type=linear;
+    yaxis  offsetmax=0.05 labelattrs=(size=10)  values=(-20 to 20 by 5) label ="Change from Baseline";
+       keylegend "series" / title="" noborder type=linecolor valueattrs=(size=10) 
+         location=inside position=bottomright across=1 opaque;
+format TRTAN TRTAN.;
+run ;
+
+~~~
   
 ---
  
-## `%sg006()` macro <a name="sg006-macro-7"></a> ######
+## `%sg006`  <a name="sg006-macro-7"></a> ######
+### Semi-logarithmic line plot of mean plus SD over time.
 
-Macro: SG006
-Purpose: Semi-logarithmic line plot of mean plus SD over time.
+<img width="586" height="314" alt="image" src="https://github.com/user-attachments/assets/036d8c57-190e-4034-a239-219489ed5898" />
 
+~~~sas
+data wk1;
+call streaminit(777);
+do TRTAN=1,2;
+    do AVISITN= 1 to 10;
+        do i = 1 to 10;
+            subjid=cats(trtan,"-",i);
+            if trtan=1 then AVAL = rand("normal",110,50);
+            else AVAL = rand("normal",100,50);
+            AVAL=(AVAL*AVISITN)**2 *0.01;
+            output;
+        end;
+    end;
+end;
+run;
+proc summary data=wk1 nway;
+    class AVISITN;
+    var AVAL;
+    output out=wk2 mean= std= /autoname;
+run;
+data sds;
+    set wk2;
+    if n(AVAL_Mean,AVAL_Stddev) = 2 then upper = AVAL_Mean + AVAL_Stddev;
+    if n(AVAL_Mean,AVAL_Stddev) = 2 then lower = AVAL_Mean - AVAL_Stddev;
+    if upper < 0 then call missing(upper);
+    if lower < 0 then call missing(lower);
+run;
+ 
+ods graphics / reset
+               noborder
+               noscale
+               width=780 px
+               height=410 px
+               attrpriority=none
+               imagefmt=png
+;
+proc sgplot data=sds noautolegend noborder;
+where AVAL_Mean >0;
+    series x=AVISITN y=AVAL_Mean / markers markerattrs=(symbol=circlefilled color=blue size=9) lineattrs=(pattern=solid color=blue thickness=1) ;
+    scatter x=AVISITN y=AVAL_Mean / yerrorupper=upper errorbarattrs=(color=blue )markerattrs = (size=0);
+    inset "Mean+SD"/position=bottomright  ;
+    inset "Semi-Logarithmic Scale" /position=topleft textattrs=(size=10);
+ 
+    xaxis offsetmin=0.05 offsetmax=0.05 values=(1 to 10 ) labelattrs=(size=10) label="Analisys Visit" type=discrete;
+   yaxis  offsetmax=0.07 labelattrs=(size=9) label=" Plasma Concentration (ng/mL)" Type=log logstyle=logexpand  logvtype=expanded
+    values=(100 1000 10000 100000 ) ;
+run ;
+
+
+~~~
   
 ---
  
