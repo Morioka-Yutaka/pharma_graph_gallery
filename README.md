@@ -14,7 +14,7 @@ Purpose: Show All Graphs and Codes.
   
 ---
  
-## `%sg001` macro <a name="sg001-macro-2"></a> ######
+## `%sg001` <a name="sg001-macro-2"></a> ######
 ### Time-course plot of mean plus-minus SD in a single group.
 
 <img width="576" height="309" alt="image" src="https://github.com/user-attachments/assets/917af268-6d24-4151-92bf-40c0a47b6aa6" />
@@ -65,12 +65,56 @@ run ;
   
 ---
  
-## `%sg002()` macro <a name="sg002-macro-3"></a> ######
+## `%sg002` <a name="sg002-macro-3"></a> ######
+### Time-course plot of mean plus-minus SD by group.
+<img width="584" height="310" alt="image" src="https://github.com/user-attachments/assets/044978e1-ada0-446e-81fb-b6b3cc7e7f9c" />
 
-Macro: SG002
-Purpose: Time-course plot of mean plus-minus SD by group.
-
-  
+~~~sas
+data wk1;
+call streaminit(777);
+do TRTAN=1,2;
+    do AVISITN= 1 to 10;
+        do i = 1 to 10;
+            subjid=cats(trtan,"-",i);
+            if trtan=1 then AVAL = rand("normal",110,3);
+            else AVAL = rand("normal",100,2);
+            output;
+        end;
+    end;
+end;
+run;
+proc summary data=wk1 nway;
+    class TRTAN AVISITN;
+    var AVAL;
+    output out=wk2 mean= std= /autoname;
+run;
+data sds;
+    set wk2;
+    if n(AVAL_Mean,AVAL_Stddev) = 2 then upper = AVAL_Mean + AVAL_Stddev;
+    if n(AVAL_Mean,AVAL_Stddev) = 2 then lower = AVAL_Mean - AVAL_Stddev;
+run;
+ 
+proc format ;
+value TRTAN 1="Active" 2="Placebo";
+run;
+ 
+proc sgplot data=sds noautolegend noborder;
+    styleattrs datacontrastcolors=(blue red)
+                  datacolors=(blue red)
+                  datalinepatterns=(solid dash)
+                  datasymbols=(circle circlefilled);   
+ 
+    series x=AVISITN y=AVAL_Mean / group=TRTAN groupdisplay=cluster clusterwidth=0.1 markers markerattrs=( size=9) lineattrs=( thickness=1) name="series";
+    scatter x=AVISITN y=AVAL_Mean /group=TRTAN groupdisplay=cluster clusterwidth=0.1 yerrorupper=upper yerrorlower=lower markerattrs = (size=0);
+    inset "Mean+-SD"/position=bottomright  ;
+ 
+    keylegend "series"/title=""  location=inside position=topright across=1 noborder;
+ 
+    xaxis offsetmin=0.05 offsetmax=0.05 values=(1 to 10 ) labelattrs=(size=10) label="Analisys Visit" type=discrete;
+    yaxis offsetmax=0.05 labelattrs=(size=10) values=(90 to 120 by 5) label ="Analysis Value";
+format TRTAN TRTAN.;
+run ;
+~~~
 ---
  
 ## `%sg003()` macro <a name="sg003-macro-4"></a> ######
