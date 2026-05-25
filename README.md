@@ -10,11 +10,55 @@ Purpose: Execute existing SG001 to SG100 macros.
   
 ---
  
-## `%sg001()` macro <a name="sg001-macro-2"></a> ######
+## `%sg001` macro <a name="sg001-macro-2"></a> ######
 
 Macro: SG001
 Purpose: Time-course plot of mean plus-minus SD in a single group.
 
+<img width="576" height="309" alt="image" src="https://github.com/user-attachments/assets/917af268-6d24-4151-92bf-40c0a47b6aa6" />
+~~~sas
+data wk1;
+call streaminit(777);
+do TRTAN=1,2;
+    do AVISITN= 1 to 10;
+        do i = 1 to 10;
+            subjid=cats(trtan,"-",i);
+            if trtan=1 then AVAL = rand("normal",110,3);
+            else AVAL = rand("normal",100,2);
+            output;
+        end;
+    end;
+end;
+run;
+proc summary data=wk1 nway;
+    class AVISITN;
+    var AVAL;
+    output out=wk2 mean= std= /autoname;
+run;
+data sds;
+    set wk2;
+    if n(AVAL_Mean,AVAL_Stddev) = 2 then upper = AVAL_Mean + AVAL_Stddev;
+    if n(AVAL_Mean,AVAL_Stddev) = 2 then lower = AVAL_Mean - AVAL_Stddev;
+run;
+ods graphics / 
+               noborder
+               noscale
+               width=780 px
+               height=410 px
+               attrpriority=none
+               imagefmt=png
+;
+proc sgplot data=sds noautolegend noborder;
+    series x=AVISITN y=AVAL_Mean / markers markerattrs=(symbol=circlefilled color=blue size=9) lineattrs=(pattern=solid color=blue thickness=1) ;
+    scatter x=AVISITN y=AVAL_Mean / yerrorupper=upper yerrorlower=lower errorbarattrs=(color=blue )markerattrs = (size=0);
+    inset "Mean+-SD"/position=bottomright  ;
+ 
+    xaxis offsetmin=0.05 offsetmax=0.05 values=(1 to 10 ) labelattrs=(size=10) label="Analisys Visit" type=discrete;
+    yaxis offsetmax=0.05 labelattrs=(size=10) values=(90 to 120 by 5) label ="Analysis Value";
+ 
+run ;
+
+~~~
   
 ---
  
