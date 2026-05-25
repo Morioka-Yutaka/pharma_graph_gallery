@@ -117,7 +117,7 @@ run ;
 ~~~
 ---
  
-## `%sg003()` macro <a name="sg003-macro-4"></a> ######
+## `%sg003` macro <a name="sg003-macro-4"></a> ######
 
 Macro: SG003
 Purpose: Spaghetti plot of individual time-course profiles in a single group.
