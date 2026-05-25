@@ -117,10 +117,8 @@ run ;
 ~~~
 ---
  
-## `%sg003` macro <a name="sg003-macro-4"></a> ######
-
-Macro: SG003
-Purpose: Spaghetti plot of individual time-course profiles in a single group.
+## `%sg003`  <a name="sg003-macro-4"></a> ######
+### Spaghetti plot of individual time-course profiles in a single group.
 
 <img width="608" height="325" alt="image" src="https://github.com/user-attachments/assets/bcaaf142-d6c1-445c-b84d-8b0a74b370d9" />
 
@@ -161,6 +159,47 @@ run ;
 ## `%sg004` <a name="sg004-macro-5"></a> ######
 ### Spaghetti plot of individual time-course profiles by group.
 
+<img width="597" height="310" alt="image" src="https://github.com/user-attachments/assets/a7407cb4-52a1-44b0-982f-8ea92796bdd4" />
+
+~~~sas
+data wk1;
+call streaminit(777);
+do TRTAN=1,2;
+    do AVISITN= 1 to 10;
+        do i = 1 to 10;
+            subjid=cats(trtan,"-",i);
+            if trtan=1 then AVAL = rand("normal",110,3);
+            else AVAL = rand("normal",110,2);
+            output;
+        end;
+    end;
+end;
+run;
+proc format ;
+value TRTAN 1="Active" 2="Placebo";
+run;
+ 
+ods graphics / reset
+               noborder
+               noscale
+               width=780 px
+               height=410 px
+               attrpriority=none
+               imagefmt=png
+;
+proc sgplot data=wk1 noautolegend noborder;
+    styleattrs datacontrastcolors=(blue red)
+    datasymbols=(circlefilled squarefilled) ;
+    series x=AVISITN y=AVAL /group=SUBJID grouplc=TRTAN groupmc=TRTAN markers markerattrs=(size=5) lineattrs=(pattern=solid  thickness=1) name="series";
+ 
+    xaxis offsetmin=0.05 offsetmax=0.05 values=(1 to 10 ) labelattrs=(size=10) label="Analisys Visit" type=linear;
+    yaxis  offsetmax=0.05 labelattrs=(size=10) values=(90 to 120 by 5) label ="Analysis Value";
+       keylegend "series" / title="" noborder type=linecolor valueattrs=(size=10)
+         location=inside position=bottomright across=1 opaque;
+format TRTAN TRTAN.;
+run ;
+
+~~~
   
 ---
  
