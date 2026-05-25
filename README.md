@@ -123,6 +123,7 @@ Macro: SG003
 Purpose: Spaghetti plot of individual time-course profiles in a single group.
 
 <img width="608" height="325" alt="image" src="https://github.com/user-attachments/assets/bcaaf142-d6c1-445c-b84d-8b0a74b370d9" />
+
 ~~~sas
 data wk1;
 call streaminit(777);
