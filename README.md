@@ -2314,74 +2314,831 @@ run;
 ~~~
 ---
  
-## `%sg030()` macro <a name="sg030-macro-30"></a> ######
+## `%sg030`  <a name="sg030-macro-30"></a> ######
+### Lollipop plot of values by category.
 
-Macro: SG030
-Purpose: Lollipop plot of values by category.
+<img width="479" height="362" alt="image" src="https://github.com/user-attachments/assets/67b4aed1-e814-43ea-8bb6-c487084093b5" />
 
+~~~sas
+data missing_map_sampke;
+call streaminit(123);
+ 
+length 
+    USUBJID $12
+    SEX $1
+    TRT $8
+    STRATA $5
+    FLAG $1
+    C01-C05 $20
+    N01-N08 8.
+    C06 $20
+    N09-N13 8.
+    C07-C12 $20
+    N14-N20 8.
+    C13-C16 $20
+    N20-N25 8.
+    C17-C20 $20;
+ 
+array nums N01-N25;
+array chars C01-C20;
+ 
+do i = 1 to 300;
+    USUBJID = cats("SUBJ", put(i, z4.));
+    
+    SEX = ifc(rand("uniform")<0.5,"M","F");
+    TRT = scan("Placebo DrugA DrugB DrugC", ceil(rand("uniform")*4));
+    STRATA = scan("Low Mid High", ceil(rand("uniform")*3));
+    FLAG = ifc(rand("uniform")<0.7,"Y","N");
+ 
+    do j = 1 to dim(nums);
+        if rand("uniform") < 0.15 then nums[j] = .;  
+        else nums[j] = rand("normal", 100, 15);
+    end;
+ 
+    do k = 1 to dim(chars);
+        if rand("uniform") < 0.20 then chars[k] = ""; 
+        else chars[k] = scan("A B C D E", ceil(rand("uniform")*5));
+    end;
+ 
+    output;
+end;
+ 
+drop i j k;
+run;
+ 
+data nullmap;
+length varname $20.;
+set missing_map_sampke;
+array ar_num _numeric_;
+do over ar_num;
+ varname=vname(ar_num);
+ varn=_i_;
+ if missing(ar_num) then catn=0;
+ else catn=1;
+ output;
+end;
+array ar_character _char_;
+do over ar_character;
+ varname=vname(ar_character);
+ varn=_i_;
+ if missing(ar_character) then catn=0;
+ else catn=2;
+ if varname ne "varname" then output;
+end;
+keep varname catn;
+run;
+ 
+ods output CrossTabFreqs=NullFreqs(where=(catn=0));
+proc freq data=nullmap  order=FREQ;
+ table  varname*catn /nopercent nocol nocum;
+run;
+ 
+proc sort data=NullFreqs;
+ by  descending RowPercent;
+run;
+data NullFreqs1;
+ set NullFreqs;
+ where ^missing(RowPercent);
+ y=_N_;
+run;
+ 
+ods graphics / reset
+               noborder
+               noscale
+               width=800 px
+               height=600 px
+               attrpriority=none
+               imagefmt=png;
+;proc sgplot data=NullFreqs1  noautolegend;
+  hbarparm category=y response=RowPercent /   barwidth=0.1 baselineattrs=(thickness=0);
+  scatter y=y  x=RowPercent /  markerattrs=(symbol=circlefilled size=7)  dataskin=sheen;
+ 
+  xaxis offsetmin=0.01 offsetmax=0.04 display=( noticks noline) values=(0 to 50 by 5) grid label="% Missing";
+  yaxis display=( noticks noline novalues nolabel) fitpolicy=split grid;
+  yaxistable varname/y=y nolabel position=left;
+  format y best6.;
+run;
+
+~~~
   
 ---
  
-## `%sg033()` macro <a name="sg033-macro-31"></a> ######
+## `%sg033`  <a name="sg033-macro-31"></a> ######
+### Scatter plot with a broken X-axis.
 
-Macro: SG033
-Purpose: Scatter plot with a broken X-axis.
+<img width="305" height="305" alt="image" src="https://github.com/user-attachments/assets/56a82c52-5885-4cfa-848b-777ef5b8cb4e" />
 
+~~~sas
+data wk1;
+call streaminit(777);
+do SEXN=1,2;
+    do AVISITN= 1 to 10;
+        do i = 1 to 10;
+            SUBJID=cats(SEXN,"-",i);
+            if SEXN = 1 then do;
+              VALUE1 = rand("normal",100,10);
+              VALUE2 = VALUE1 + rand("normal",20,10);
+            end;
+            if SEXN = 2 then do;
+              VALUE1 = rand("normal",110,20);
+              VALUE2 = VALUE1 + rand("normal",30,10);
+              if rand("UNIFORM") < 0.1 then  VALUE2 =1000  + rand("normal",30,10) ;
+            end;
+            output;
+        end;
+    end;
+end;
+run;
+proc format ;
+value sexn 1="Male" 2="Female";
+run;
+ods graphics / reset
+               noborder
+               noscale
+               width=500 px
+               height=500 px
+               attrpriority=none
+               imagefmt=png
+;
+proc sgplot data=wk1 ;
+  styleattrs
+     datacontrastcolors=(blue red ) 
+     datasymbols=(square circle)
+;
+scatter x=VALUE2 y=VALUE1/group=SEXN;
+keylegend/title="Sex" location=inside position=topleft opaque;
+xaxis grid label="Parameter 1" ranges=(0-250 1000-1100) values=(0 to 1100 by 100) ;
+yaxis grid label="Parameter 2";
+format SEXN sexn.;
+run;
+
+~~~
+---
+ 
+## `%sg034`  <a name="sg034-macro-32"></a> ######
+### Kaplan-Meier plot with confidence band and median survival droplines.
+
+<img width="458" height="317" alt="image" src="https://github.com/user-attachments/assets/ee4e308b-5fa7-4456-af34-af946f7ea550" />
+
+~~~sas
+data dummy_adtte;
+attrib
+USUBJID label="Unique Subject Identifier" length=$20.
+TRTP  label="Planned Treatment" length=$20.
+TRTPN label="Planned Treatment (N)" length=8.
+PARAM  label="Parameter" length=$50.
+PARAMCD label="Parameter Code" length=$20.
+PARAMN  label="Parameter (N)" length=8.
+AVAL  label="Analysis Value" length=8.
+CNSR  label="Censor" length=8.
+;
+call streaminit(1982);
+do TRTPN = 1 to 2;
+do _USUBJID = 1 to 100;
+do PARAMN = 1 to 1;
+if TRTPN =1 then time =rand("WEIBULL", 1.5, 10);
+else if TRTPN =2 then time =rand("WEIBULL", 1.5, 7);
+else if TRTPN =3 then time =rand("WEIBULL", 1.5, 3);
+else time =rand("WEIBULL", 1.5, 5);
+USUBJID = cats(TRTPN,_USUBJID);
+censor_limit = rand("UNIFORM") * 15;
+CNSR = ^(time <= censor_limit);
+AVAL = min(time, censor_limit);
+TRTP = choosec(TRTPN,"XXXXX","YYYY","ZZZZZ","Placebo");
+PARAMCD = choosec(PARAMN,"PFS");
+PARAM = choosec(PARAMN,"Progression Free Survival (Months)");
+output;
+end;
+end;
+end;
+keep USUBJID -- CNSR;
+run;
+proc sort data=dummy_adtte(keep=TRTP TRTPN) out=group_fmt nodupkey;
+by TRTP TRTPN;
+run;
+data group_fmt;
+set group_fmt;
+FMTNAME = "$KM_GR";
+START = cats(TRTPN);
+LABEL = TRTP;
+run;
+proc format cntlin=group_fmt;
+run;
+ods graphics on;
+ods noresults;
+ods select none;
+ods output Survivalplot=SurvivalPlotData;
+ods output Quartiles=Quartiles;
+proc lifetest data=dummy_adtte plots=survival(atrisk=0 to 15 by 1 cl);
+ time AVAL * CNSR(1);
+ strata TRTPN ;
+run;
+proc sort data=SurvivalPlotData(keep = Stratum) out=Stratum nodupkey;
+ by Stratum;
+run;
+proc sort data=SurvivalPlotData(keep = tAtRisk) out=tAtRisk nodupkey;
+ where ^missing(tAtRisk);
+ by tAtRisk;
+run;
+data atrisk;
+set Stratum;
+if _N_=1 then do;
+  declare hash h1(dataset:"SurvivalPlotData(keep=Stratum tAtRisk)");
+  h1.definekey("Stratum","tAtRisk");
+  h1.definedone();
+end;
+do i=1 to obs;
+  set tAtRisk nobs=obs point=i;
+  AtRisk=0;
+  if h1.check() ne 0 then output;
+end;
+run;
+data SurvivalPlotData_1;
+set SurvivalPlotData atrisk;
+if ^missing(Censored) then do;
+  tick_marks_upper = Censored + 0.02;
+  tick_marks_lower = Censored - 0.02;
+end;
+run;
+ 
+proc sql noprint;
+ select Estimate into:p50_1 from Quartiles
+ where Percent=50 and stratum=1;
+ 
+ select Estimate into:p50_2 from Quartiles
+ where Percent=50 and stratum=2;
+quit;
+ 
+ods graphics / reset
+               noborder
+               noscale
+               width=745 px
+               height=510 px
+               attrpriority=none
+               imagefmt=png
+;
+ods results;
+ods select all;
+proc sgplot data=SurvivalPlotData_1 noborder noautolegend ;
+  styleattrs datacontrastcolors=(red blue )
+  datacolors=(red blue )
+  datalinepatterns=(solid solid) ;
+ 
+ step x=time y=survival / group=stratum name="step" lineattrs=(thickness=2);
+ scatter x=time y=censored /noerrorcaps yerrorupper=tick_marks_upper yerrorlower=tick_marks_lower errorbarattrs=(pattern=1 thickness=2) markerattrs=(size=0) GROUP=stratum;
+ band  x=time upper=SDF_UCL lower=SDF_LCL/ group=stratum type=step transparency=0.8;
+ dropline x=&p50_1.  y=0.5 /dropto=both lineattrs=(color=red  pattern=dot thickness=3);
+ dropline x=&p50_2.  y=0.5 /dropto=both lineattrs=(color=blue  pattern=dot thickness=3);
+ 
+ 
+ xaxistable atrisk / x=tatrisk class=stratum location=outside valueattrs=(size=10 color=black)  ;
+ keylegend "step" / location=inside position=topright across=1 noborder valueattrs=(size=10) exclude=("") ;
+ 
+ yaxis label="Probability" min=0 values=(0 0.2 0.4 0.5 0.6 0.8 1.0 ) offsetmax=0.03;
+ xaxis label="Survival Time (Month)" values=(0 to 15 by 1) offsetmin=0.04 ;
+format stratum $KM_GR. ;
+run;
+
+~~~
   
 ---
  
-## `%sg034()` macro <a name="sg034-macro-32"></a> ######
+## `%sg035` <a name="sg035-macro-33"></a> ######
+### Pareto plot of counts and cumulative percentage.
 
-Macro: SG034
-Purpose: Kaplan-Meier plot with confidence band and median survival droplines.
+<img width="447" height="308" alt="image" src="https://github.com/user-attachments/assets/ed273db0-90b3-43e9-a32c-9469324f8fdc" />
 
+~~~sas
+data parato_raw;
+  length reason $60;
+  reason="Missing Visit Date"; count=42; output;
+  reason="Incomplete Adverse Event Term"; count=35; output;
+  reason="Lab Value Out of Range"; count=28; output;
+  reason="Missing Concomitant Medication"; count=21; output;
+  reason="Inconsistent AE Start Date"; count=16; output;
+  reason="Unresolved Medical History Query"; count=12; output;
+  reason="Missing Informed Consent Date"; count=9; output;
+  reason="Other"; count=7; output;
+run;
+proc sort data=parato_raw out=parato_sort;
+    by descending count;
+run;
+proc sql noprint;
+    select sum(count) into :total_count
+    from parato_sort;
+quit;
+ 
+data parato_data;
+    set parato_sort;
+    retain cum_count 0 order 0;
+    qreason=quote(reason);
+    order + 1;
+    cum_count + count;
+    cum_pct = cum_count / &total_count * 100;
+run;
+ 
+proc sql noprint;
+select qreason into: _label_list separated by " " 
+from parato_data;
+quit;
+ 
+ods graphics / reset
+               noborder
+               noscale
+               width=745 px
+               height=510 px
+               attrpriority=none
+               imagefmt=png
+;
+proc sgplot data=parato_data noautolegend;
+    vbarparm category=order response=count / 
+        datalabel
+        fillattrs=(color=cx5B9BD5)
+        outlineattrs=(color=gray);
+ 
+    series x=order y=cum_pct / 
+        y2axis
+        markers
+        lineattrs=(color=red thickness=2)
+        markerattrs=(symbol=circlefilled color=red);
+ 
+    refline 80 / axis=y2
+        lineattrs=(pattern=shortdash color=gray);
+ 
+    yaxis label="Number of Queries" grid;
+    y2axis label="Cumulative Percentage (%)"
+        values=(0 to 100 by 10)
+        min=0 max=100;
+ 
+    xaxis label="Query Reason"
+        values=(1 to 8 by 1)
+        valuesdisplay=(
+            &_label_list.
+        )
+        fitpolicy=rotate;
+format order best.;
+run;
+
+~~~
   
 ---
  
-## `%sg035()` macro <a name="sg035-macro-33"></a> ######
+## `%sg036`  <a name="sg036-macro-34"></a> ######
+### Bland-Altman plot of measurement difference versus measurement mean.
 
-Macro: SG035
-Purpose: Pareto plot of counts and cumulative percentage.
+<img width="450" height="308" alt="image" src="https://github.com/user-attachments/assets/59d13454-9005-4200-8f8f-93cf375e291c" />
 
+~~~sas
+data dummy_normal;
+  call streaminit(12345);
+ 
+  do USUBJID = 1 to 80;
+    true_value = rand("normal", 50, 10);
+ 
+    TEST_A_AVAL = true_value + rand("normal", 0, 3);
+    TEST_B_AVAL = true_value + rand("normal", 0, 3);
+ 
+    output;
+  end;
+ 
+  drop true_value;
+run;
+ 
+data plot2;
+set dummy_normal;
+if  n(of TEST_A_AVAL  TEST_B_AVAL) =2 then do;
+  mean = mean(of TEST_A_AVAL  TEST_B_AVAL);
+  diff = TEST_A_AVAL-TEST_B_AVAL;
+end;
+run;
+proc summary data=plot2 ;
+var diff;
+output out=diff_std mean= stddev= /autoname;
+run;
+ 
+data plot3;
+set plot2;
+if _N_=1 then set diff_std;
+if n(of diff_mean diff_stddev) = 2 then do;
+  lower = diff_mean - diff_stddev;
+  upper = diff_mean + diff_stddev;
+end;
+run;
+ 
+ods graphics / reset
+               noborder
+               noscale
+               width=745 px
+               height=510 px
+               attrpriority=none
+               imagefmt=png
+;
+proc sgplot data=plot3;
+scatter x= mean y=diff;
+refline 0 /axis=y;
+refline lower/axis=y lineattrs=(pattern=dash);
+refline upper/axis=y lineattrs=(pattern=dash);
+xaxis label="Mean of two measurements";
+yaxis label="Difference between the two measurements";
+run;
+
+~~~
   
 ---
  
-## `%sg036()` macro <a name="sg036-macro-34"></a> ######
+## `%sg037`  <a name="sg037-macro-35"></a> ######
+### Scatter plot with regression line within the data range.
 
-Macro: SG036
-Purpose: Bland-Altman plot of measurement difference versus measurement mean.
+<img width="465" height="304" alt="image" src="https://github.com/user-attachments/assets/863025f1-ef1e-43e8-894f-8aa985df8c50" />
 
+~~~sas
+ods output ParameterEstimates=ParameterEstimates;
+proc reg data=sashelp.class ;
+model height = age;
+run;
+quit;
+data _null_;
+set ParameterEstimates;
+if Variable="Intercept" then call symputx("Intercept",round(Estimate,0.01));
+else call symputx("Slope",round(Estimate,0.01));
+run;
+ 
+ods graphics / reset
+               noborder
+               noscale
+               width=745 px
+               height=510 px
+               attrpriority=none
+               imagefmt=png
+;
+proc sgplot data=sashelp.class noborder;
+    reg x=age y=height /clm = "95% Confidence Limits" cli="95% Prediction Limits" legendlabel="Regression";
+    xaxis label="Age" values=(10 to 17);
+    yaxis label="Height (inch)" values=(40 to 90 by 10);
+    inset "Slope = &Slope." "Intercept = &Intercept.";
+    keylegend /noborder location=inside position=bottomright across=1;
+run;
+~~~
   
 ---
  
-## `%sg037()` macro <a name="sg037-macro-35"></a> ######
+## `%sg038`  <a name="sg038-macro-36"></a> ######
+### Scatter plot with regression line extended over the axis range.
 
-Macro: SG037
-Purpose: Scatter plot with regression line within the data range.
+<img width="453" height="311" alt="image" src="https://github.com/user-attachments/assets/23d4cf9d-b697-46a7-be13-7d4a4b8120d7" />
 
+~~~sas
+data xgrid;
+  do AGE = 9 to 18 by 1;
+    height = .;
+    output;
+  end;
+run;
+data reg_input;
+  set sashelp.class xgrid;
+run;
+ods output ParameterEstimates=ParameterEstimates;
+proc reg data=reg_input ;
+  model height = AGE;
+  output out=reg_pred
+    p     = pred
+    lclm  = lclm
+    uclm  = uclm
+    lcl   = lcli
+    ucl   = ucli;
+run;
+quit;
+data _null_;
+set ParameterEstimates;
+if Variable="Intercept" then call symputx("Intercept",round(Estimate,0.01));
+else call symputx("Slope",round(Estimate,0.01));
+run;
+data reg_pred_input;
+set reg_pred;
+if ^missing(height) then call missing(of pred lcli ucli lclm uclm);
+run;
+ 
+ods graphics / reset
+               noborder
+               noscale
+               width=745 px
+               height=510 px
+               attrpriority=none
+               imagefmt=png
+;
+proc sgplot data=reg_pred_input noborder;
+    scatter x=age y=height;
+ 
+    lineparm x=0 y=&intercept slope=&slope
+       / legendlabel="Regression" name="reg";
+ 
+    band x=age lower=lclm upper=uclm
+      / transparency=0.5
+        legendlabel="95% Confidence Limits" name="clm";
+ 
+      series x=age y=lcli
+    / transparency=0.6
+      lineattrs=(thickness=2 pattern=shortdash)
+      legendlabel="95% Prediction Limits" name="cli";
+ 
+      series x=age y=ucli
+    / transparency=0.6
+      lineattrs=(thickness=2 pattern=shortdash);
+ 
+    xaxis label="Age" values=(10 to 17);
+    yaxis label="Height (inch.)" values=(40 to 90 by 10);
+    inset "Slope = &Slope." "Intercept = &Intercept.";
+    keylegend "cli" "clm" "reg" /noborder location=inside position=bottomright across=1;
+run;
+
+~~~
   
 ---
  
-## `%sg038()` macro <a name="sg038-macro-36"></a> ######
+## `%sg039`  <a name="sg039-macro-37"></a> ######
+### Volcano plot of fold change versus statistical significance.
 
-Macro: SG038
-Purpose: Scatter plot with regression line extended over the axis range.
+<img width="449" height="313" alt="image" src="https://github.com/user-attachments/assets/b850168a-6460-45bf-a50c-f9585c3b12ef" />
 
-  
----
+~~~sas
+data volcano;
+  length gene $10 sig_cat $20 label_gene $10;
  
-## `%sg039()` macro <a name="sg039-macro-37"></a> ######
+  gene="GENE001"; log2fc=1.80;  p_value=0.0005; link calc; output;
+  gene="GENE002"; log2fc=1.45;  p_value=0.0030; link calc; output;
+  gene="GENE003"; log2fc=1.20;  p_value=0.0120; link calc; output;
+  gene="GENE004"; log2fc=0.95;  p_value=0.0200; link calc; output;
+  gene="GENE005"; log2fc=0.60;  p_value=0.0400; link calc; output;
+  gene="GENE006"; log2fc=0.30;  p_value=0.1800; link calc; output;
+  gene="GENE007"; log2fc=-0.20; p_value=0.6500; link calc; output;
+  gene="GENE008"; log2fc=-0.55; p_value=0.0900; link calc; output;
+  gene="GENE009"; log2fc=-1.10; p_value=0.0180; link calc; output;
+  gene="GENE010"; log2fc=-1.45; p_value=0.0040; link calc; output;
+  gene="GENE011"; log2fc=-1.90; p_value=0.0008; link calc; output;
+  gene="GENE012"; log2fc=2.20;  p_value=0.0001; link calc; output;
+  gene="GENE013"; log2fc=1.70;  p_value=0.0080; link calc; output;
+  gene="GENE014"; log2fc=1.05;  p_value=0.0300; link calc; output;
+  gene="GENE015"; log2fc=0.85;  p_value=0.0700; link calc; output;
+  gene="GENE016"; log2fc=0.40;  p_value=0.3000; link calc; output;
+  gene="GENE017"; log2fc=0.10;  p_value=0.8500; link calc; output;
+  gene="GENE018"; log2fc=-0.35; p_value=0.4200; link calc; output;
+  gene="GENE019"; log2fc=-0.90; p_value=0.0600; link calc; output;
+  gene="GENE020"; log2fc=-1.25; p_value=0.0200; link calc; output;
+  gene="GENE021"; log2fc=-1.60; p_value=0.0060; link calc; output;
+  gene="GENE022"; log2fc=-2.10; p_value=0.0003; link calc; output;
+  gene="GENE023"; log2fc=2.50;  p_value=0.0002; link calc; output;
+  gene="GENE024"; log2fc=1.35;  p_value=0.0150; link calc; output;
+  gene="GENE025"; log2fc=0.75;  p_value=0.1100; link calc; output;
+  gene="GENE026"; log2fc=0.15;  p_value=0.7200; link calc; output;
+  gene="GENE027"; log2fc=-0.15; p_value=0.7600; link calc; output;
+  gene="GENE028"; log2fc=-0.70; p_value=0.1300; link calc; output;
+  gene="GENE029"; log2fc=-1.05; p_value=0.0450; link calc; output;
+  gene="GENE030"; log2fc=-1.80; p_value=0.0020; link calc; output;
+  gene="GENE031"; log2fc=1.10;  p_value=0.0490; link calc; output;
+  gene="GENE032"; log2fc=1.55;  p_value=0.0070; link calc; output;
+  gene="GENE033"; log2fc=2.00;  p_value=0.0010; link calc; output;
+  gene="GENE034"; log2fc=0.50;  p_value=0.2500; link calc; output;
+  gene="GENE035"; log2fc=0.05;  p_value=0.9100; link calc; output;
+  gene="GENE036"; log2fc=-0.45; p_value=0.3300; link calc; output;
+  gene="GENE037"; log2fc=-1.15; p_value=0.0350; link calc; output;
+  gene="GENE038"; log2fc=-1.55; p_value=0.0090; link calc; output;
+  gene="GENE039"; log2fc=-2.30; p_value=0.0004; link calc; output;
+  gene="GENE040"; log2fc=2.10;  p_value=0.0007; link calc; output;
+  gene="GENE041"; log2fc=1.25;  p_value=0.0250; link calc; output;
+  gene="GENE042"; log2fc=0.90;  p_value=0.0800; link calc; output;
+  gene="GENE043"; log2fc=0.35;  p_value=0.5000; link calc; output;
+  gene="GENE044"; log2fc=-0.05; p_value=0.9300; link calc; output;
+  gene="GENE045"; log2fc=-0.50; p_value=0.2100; link calc; output;
+  gene="GENE046"; log2fc=-0.95; p_value=0.0550; link calc; output;
+  gene="GENE047"; log2fc=-1.30; p_value=0.0170; link calc; output;
+  gene="GENE048"; log2fc=-1.75; p_value=0.0050; link calc; output;
+  gene="GENE049"; log2fc=1.65;  p_value=0.0065; link calc; output;
+  gene="GENE050"; log2fc=-2.00; p_value=0.0015; link calc; output;
+ 
+  stop;
+ 
+  calc:
+    neglog10p = -log10(p_value);
+ 
+    if p_value < 0.05 and log2fc >= 1 then sig_cat = "Up";
+    else if p_value < 0.05 and log2fc <= -1 then sig_cat = "Down";
+    else sig_cat = "Not significant";
+ 
+    if p_value < 0.01 and abs(log2fc) >= 1.5 then label_gene = gene;
+    else label_gene = "";
+ 
+    return;
+run;
+ 
+ 
+ods graphics / reset
+               noborder
+               noscale
+               width=745 px
+               height=510 px
+               attrpriority=none
+               imagefmt=png
+;
+proc sgplot data=volcano noborder;
+  scatter x=log2fc y=neglog10p / 
+    group=sig_cat
+    markerattrs=(symbol=circlefilled size=8)
+    transparency=0.2
+    datalabel=label_gene;
+ 
+  refline -1 1 / axis=x lineattrs=(pattern=shortdash);
+  refline 1.30103 / axis=y lineattrs=(pattern=shortdash);
+ 
+  xaxis label="log2 Fold Change";
+ 
+  yaxis label="-log10(p-value)" ;
+ 
+  keylegend / title="Category";
+run;
 
-Macro: SG039
-Purpose: Volcano plot of fold change versus statistical significance.
-
+~~~
   
 ---
  
 ## `%sg040()` macro <a name="sg040-macro-38"></a> ######
+### Bubble plot of categorical change from baseline by visit and treatment group.
 
-Macro: SG040
-Purpose: Bubble plot of categorical change from baseline by visit and treatment group.
+<img width="446" height="307" alt="image" src="https://github.com/user-attachments/assets/a7059665-f91e-4140-ac6f-7c59ef5a0cbf" />
 
+~~~sas
+data adlb_mock;
+    call streaminit(123);
+ 
+    length usubjid $12 trt01p $20 paramcd $8 avisit $20 chgcat $20;
+ 
+    do subj = 1 to 180;
+ 
+        usubjid = cats("SUBJ", put(subj, z3.));
+ 
+        if rand("uniform") < 0.5 then trt01p = "Placebo";
+        else trt01p = "Active Drug";
+ 
+        paramcd = "ALT";
+        base = rand("normal", 30, 8);
+ 
+        do avisitn = 1 to 5;
+ 
+            select (avisitn);
+                when (1) avisit = "Week 2";
+                when (2) avisit = "Week 4";
+                when (3) avisit = "Week 8";
+                when (4) avisit = "Week 12";
+                when (5) avisit = "Week 24";
+                otherwise avisit = "Other";
+            end;
+ 
+            if trt01p = "Placebo" then
+                chg = rand("normal", 1, 12);
+            else
+                chg = rand("normal", -4, 12);
+ 
+            if chg < -20 then chgcat = "< -20";
+            else if chg < -10 then chgcat = "-20 to < -10";
+            else if chg < 0 then chgcat = "-10 to < 0";
+            else if chg < 10 then chgcat = "0 to < 10";
+            else if chg < 20 then chgcat = "10 to < 20";
+            else chgcat = ">= 20";
+ 
+            output;
+        end;
+    end;
+run;
+ 
+data adlb_mock2;
+    set adlb_mock;
+ 
+    select (chgcat);
+        when ("< -20")        chgcatn = 1;
+        when ("-20 to < -10") chgcatn = 2;
+        when ("-10 to < 0")   chgcatn = 3;
+        when ("0 to < 10")    chgcatn = 4;
+        when ("10 to < 20")   chgcatn = 5;
+        when (">= 20")        chgcatn = 6;
+        otherwise             chgcatn = .;
+    end;
+run;
+ 
+proc summary data=adlb_mock2 nway;
+    class avisitn avisit chgcatn chgcat trt01p;
+    var chg;
+    output out=bubble_sum(drop=_type_ _freq_)
+        n = n_subject
+        mean = mean_chg;
+run;
+ 
+data bubble_sum2;
+    set bubble_sum;
+ 
+    if trt01p = "Placebo" then avisitn_plot = avisitn - 0.15;
+    else if trt01p = "Active Drug" then avisitn_plot = avisitn + 0.15;
+    else avisitn_plot = avisitn;
+ 
+    label
+        avisitn_plot = "Visit"
+        chgcatn      = "Change from Baseline Category"
+        n_subject    = "Number of Subjects";
+run;
+ 
+proc sgplot data=bubble_sum2 noborder;
+    bubble x=avisitn_plot
+           y=chgcatn
+           size=n_subject
+           / group=trt01p
+             transparency=0.25
+             bradiusmin=2
+             bradiusmax=18
+             datalabel=n_subject
+             datalabelpos=top
+;
+ 
+    xaxis label="Visit"
+          values=(1 2 3 4 5)
+          valuesdisplay=("Week 2" "Week 4" "Week 8" "Week 12" "Week 24")
+          offsetmin=0.1 offsetmax=0.1
+          integer;
+ 
+    yaxis label="Change from Baseline Category"
+          values=(1 2 3 4 5 6)
+          valuesdisplay=("< -20"
+                         "-20 to < -10"
+                         "-10 to < 0"
+                         "0 to < 10"
+                         "10 to < 20"
+                         ">= 20");
+ 
+    keylegend / title="Treatment Group";
+ 
+run;
+
+~~~
   
 ---
+---
+# version history
+0.1.0(26May2026): Initial version
+
+## What is SAS Packages?
+
+The package is built on top of **SAS Packages Framework(SPF)** developed by Bartosz Jablonski.
+
+For more information about the framework, see [SAS Packages Framework](https://github.com/yabwon/SAS_PACKAGES).
+
+You can also find more SAS Packages (SASPacs) in the [SAS Packages Archive(SASPAC)](https://github.com/SASPAC).
+
+## How to use SAS Packages? (quick start)
+
+### 1. Set-up SAS Packages Framework
+
+First, create a directory for your packages and assign a `packages` fileref to it.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~sas
+filename packages "\path\to\your\packages";
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Secondly, enable the SAS Packages Framework.
+(If you don't have SAS Packages Framework installed, follow the instruction in 
+[SPF documentation](https://github.com/yabwon/SAS_PACKAGES/tree/main/SPF/Documentation) 
+to install SAS Packages Framework.)
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~sas
+%include packages(SPFinit.sas)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+### 2. Install SAS package
+
+Install SAS package you want to use with the SPF's `%installPackage()` macro.
+
+- For packages located in **SAS Packages Archive(SASPAC)** run:
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~sas
+  %installPackage(packageName)
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- For packages located in **PharmaForest** run:
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~sas
+  %installPackage(packageName, mirror=PharmaForest)
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- For packages located at some network location run:
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~sas
+  %installPackage(packageName, sourcePath=https://some/internet/location/for/packages)
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  (e.g. `%installPackage(ABC, sourcePath=https://github.com/SomeRepo/ABC/raw/main/)`)
+
+
+### 3. Load SAS package
+
+Load SAS package you want to use with the SPF's `%loadPackage()` macro.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~sas
+%loadPackage(packageName)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+### Enjoy!
+
