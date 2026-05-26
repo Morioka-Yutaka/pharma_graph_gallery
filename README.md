@@ -636,42 +636,488 @@ run;
 ---
  
 ## `%sg011` <a name="sg011-macro-12"></a> ######
+### Waterfall plot of subject-level change from baseline.
 
-Macro: SG011
-Purpose: Waterfall plot of subject-level change from baseline.
+<img width="549" height="258" alt="image" src="https://github.com/user-attachments/assets/182b31d1-9ced-4ae2-b3ef-78e7243318db" />
 
+~~~sas
+proc format;
+value RECIST   1="PD"  2="SD" 3="PR" 4="CR";
+run;
+ 
+data wk1;
+  length SUBJID $20.;
+  format RECIST RECIST.;
+ 
+  SUBJID="1001"; PCHG=-75; RECIST=2; output;
+  SUBJID="1002"; PCHG=-73; RECIST=3; output;
+  SUBJID="1003"; PCHG=-51; RECIST=2; output;
+  SUBJID="1004"; PCHG=-09; RECIST=2; output;
+  SUBJID="1005"; PCHG=-10; RECIST=2; output;
+  SUBJID="1006"; PCHG=-17; RECIST=2; output;
+  SUBJID="1007"; PCHG=-100; RECIST=3; output;
+  SUBJID="1008"; PCHG=-83; RECIST=3; output;
+  SUBJID="1009"; PCHG=-65; RECIST=2; output;
+  SUBJID="1010"; PCHG=-53; RECIST=2; output;
+  SUBJID="1011"; PCHG=-100; RECIST=4; output;
+  SUBJID="1012"; PCHG=-48; RECIST=3; output;
+  SUBJID="1013"; PCHG=-47; RECIST=3; output;
+  SUBJID="1014"; PCHG=-85; RECIST=3; output;
+  SUBJID="1015"; PCHG=-58; RECIST=3; output;
+  SUBJID="1016"; PCHG=54; RECIST=1; output;
+  SUBJID="1017"; PCHG=-100; RECIST=4; output;
+  SUBJID="1018"; PCHG=-68; RECIST=3; output;
+  SUBJID="1019"; PCHG=-25; RECIST=1; output;
+  SUBJID="1020"; PCHG=21; RECIST=1; output;
+  SUBJID="1021"; PCHG=-87; RECIST=3; output;
+  SUBJID="1022"; PCHG=-21; RECIST=2; output;
+  SUBJID="1023"; PCHG=-29; RECIST=2; output;
+  SUBJID="1024"; PCHG=-20; RECIST=1; output;
+  SUBJID="1025"; PCHG=-43; RECIST=3; output;
+  SUBJID="1026"; PCHG=-50; RECIST=3; output;
+  SUBJID="1027"; PCHG=-74; RECIST=3; output;
+  SUBJID="1028"; PCHG=-100; RECIST=4; output;
+  SUBJID="1029"; PCHG=-36; RECIST=3; output;
+  SUBJID="1030"; PCHG=-44; RECIST=3; output;
+  SUBJID="1031"; PCHG=22; RECIST=2; output;
+  SUBJID="1032"; PCHG=-59; RECIST=3; output;
+  SUBJID="1033"; PCHG=-26; RECIST=2; output;
+  SUBJID="1034"; PCHG=-89; RECIST=3; output;
+  SUBJID="1035"; PCHG=-57; RECIST=3; output;
+  SUBJID="1036"; PCHG=-72; RECIST=2; output;
+  SUBJID="1037"; PCHG=-76; RECIST=3; output;
+  SUBJID="1038"; PCHG=-66; RECIST=3; output;
+  SUBJID="1039"; PCHG=-44; RECIST=3; output;
+  SUBJID="1040"; PCHG=-31; RECIST=3; output;
+  SUBJID="1041"; PCHG=-40; RECIST=3; output;
+  SUBJID="1042"; PCHG=-57; RECIST=3; output;
+  SUBJID="1043"; PCHG=-74; RECIST=3; output;
+  SUBJID="1044"; PCHG=-13; RECIST=2; output;
+  SUBJID="1045"; PCHG=-07; RECIST=1; output;
+  SUBJID="1046"; PCHG=-05; RECIST=2; output;
+  SUBJID="1047"; PCHG=-29; RECIST=2; output;
+  SUBJID="1048"; PCHG=-51; RECIST=3; output;
+  SUBJID="1049"; PCHG=-70; RECIST=3; output;
+  SUBJID="1050"; PCHG=-35; RECIST=3; output;
+  SUBJID="1051"; PCHG=-43; RECIST=3; output;
+  SUBJID="1052"; PCHG=-34; RECIST=2; output;
+  SUBJID="1053"; PCHG=-87; RECIST=3; output;
+  SUBJID="1054"; PCHG=-34; RECIST=3; output;
+  SUBJID="1055"; PCHG=-59; RECIST=3; output;
+  SUBJID="1056"; PCHG=-45; RECIST=3; output;
+  SUBJID="1057"; PCHG=-26; RECIST=2; output;
+  SUBJID="1058"; PCHG=-22; RECIST=2; output;
+  SUBJID="1059"; PCHG=-100; RECIST=4; output;
+  SUBJID="1060"; PCHG=-75; RECIST=3; output;
+  SUBJID="1061"; PCHG=-83; RECIST=2; output;
+  SUBJID="1062"; PCHG=-38; RECIST=3; output;
+  SUBJID="1063"; PCHG=-70; RECIST=3; output;
+  SUBJID="1064"; PCHG=-12; RECIST=2; output;
+  SUBJID="1065"; PCHG=-32; RECIST=3; output;
+  SUBJID="1066"; PCHG=-15; RECIST=2; output;
+  SUBJID="1067"; PCHG=-49; RECIST=3; output;
+  SUBJID="1068"; PCHG=-50; RECIST=3; output;
+  SUBJID="1069"; PCHG=0; RECIST=1; output;
+  SUBJID="1070"; PCHG=-41; RECIST=3; output;
+  SUBJID="1071"; PCHG=-41; RECIST=3; output;
+  SUBJID="1072"; PCHG=-50; RECIST=3; output;
+  SUBJID="1073"; PCHG=-76; RECIST=2; output;
+  SUBJID="1074"; PCHG=-78; RECIST=3; output;
+  SUBJID="1075"; PCHG=-18; RECIST=2; output;
+  SUBJID="1076"; PCHG=0; RECIST=1; output;
+  SUBJID="1077"; PCHG=44; RECIST=1; output;
+  SUBJID="1078"; PCHG=-23; RECIST=2; output;
+  SUBJID="1079"; PCHG=-34; RECIST=3; output;
+run;
+ 
+proc sort data=wk1 out=wk2;
+   by descending PCHG RECIST SUBJID;
+run;
+ 
+data sds;
+   set wk2;
+   rank + 1;
+run;
+ 
+data MYMAP;
+length ID VALUE LineColor $30.;
+ID ="myid";
+VALUE="PD";LineColor="RED";output;
+VALUE="SD";LineColor="ORANGE";output;
+VALUE="PR";LineColor="GREEN";output;
+VALUE="CR";LineColor="BLUE";output;
+run;
+ 
+ods graphics / reset
+               noborder
+               noscale
+               width=700 px
+               height=400 px
+               attrpriority=none
+               imagefmt=png
+;
+ods graphics / reset noborder noscale  width=850px height=400px imagefmt=png;
+proc sgplot data=sds noborder dattrmap=MYMAP;
+   refline -0.3 / axis=y lineattrs=(pattern=shortdash);
+   needle x=rank y=PCHG / baseline=0 group=RECIST
+          lineattrs=(thickness=7px pattern=solid) name="needle" attrid=myid;
+   xaxis offsetmin=0.01 offsetmax=0.07 label="Cumulative number of participants" values=(1, 5 to 80 by 5) integer;
+   yaxis label="Change from Baseline (%)" values=(-100 to 100 by 20) valueshint;
+   keylegend / title="" location=inside down=2 noborder;
+   format  RECIST RECIST.;
+run;
+~~~
   
 ---
  
-## `%sg012()` macro <a name="sg012-macro-13"></a> ######
+## `%sg012()` <a name="sg012-macro-13"></a> ######
+### Scatter plot of individual values and overall mean plus-minus SD by visit.
 
-Macro: SG012
-Purpose: Scatter plot of individual values and overall mean plus-minus SD by visit.
+<img width="501" height="267" alt="image" src="https://github.com/user-attachments/assets/b134fd3c-8d5e-4d8b-8160-e280860f8f75" />
 
+~~~sas
+data wk1;
+call streaminit(777);
+do TRTAN=1,2;
+    do AVISITN= 1 to 3;
+        do i = 1 to 10;
+            subjid=cats(trtan,"-",i);
+            if trtan=1 then AVAL = rand("normal",110,3);
+            else AVAL = rand("normal",100,2);
+            output;
+        end;
+    end;
+end;
+run;
+proc summary data=wk1 nway;
+    class  AVISITN;
+    var AVAL;
+    output out=wk2 mean= std= /autoname;
+run;
+data summary;
+    set wk2;
+    if n(AVAL_Mean,AVAL_Stddev) = 2 then upper = AVAL_Mean + AVAL_Stddev;
+    if n(AVAL_Mean,AVAL_Stddev) = 2 then lower = AVAL_Mean - AVAL_Stddev;
+    dummy_group=3;
+run;
+data dummy;
+ do dummy_group = 1 to 2;
+     do AVISITN= 1 to 3;
+      output;
+    end;
+ end;
+run;
+data sds;
+set wk1
+      dummy
+      summary;
+run;
+ 
+proc format ;
+value TRTAN 1="Active" 2="Placebo";
+run;
+ods graphics / reset
+               noborder
+               noscale
+               width=780 px
+               height=410 px
+               attrpriority=none
+               imagefmt=png
+;
+proc sgplot data=sds noborder;
+  scatter x = AVISITN y=AVAL/  group= TRTAN nomissinggroup groupdisplay=cluster clusterwidth=0.2 jitter markerattrs=(symbol=circlefilled) name="scatter";
+  scatter x =AVISITN y=AVAL_Mean / group=dummy_group  groupdisplay=cluster clusterwidth=0.4 yerrorupper=upper yerrorlower=lower
+                                 markerattrs=(color=black size=9 symbol=squarefilled) 
+                                 errorbarattrs=(color=black);
+  xaxis type=discrete offsetmax=0.1;
+  yaxis values=(90 to 120 by 5 ); 
+  keylegend "scatter" / title="Treatment"  valueattrs=(size=10) noborder
+         location=inside position=topright across=1 opaque;
+ format TRTAN TRTAN.;
+run;
+
+~~~
   
 ---
  
-## `%sg013()` macro <a name="sg013-macro-14"></a> ######
+## `%sg013` <a name="sg013-macro-14"></a> ######
+### Clustered bar chart of rates by type and treatment group.
 
-Macro: SG013
-Purpose: Clustered bar chart of rates by type and treatment group.
+<img width="559" height="386" alt="image" src="https://github.com/user-attachments/assets/cd2b1aa8-ffc7-450f-a51f-83ff5dc5f7b3" />
 
+~~~sas
+data wk1;
+do TRTP="Active","Placebo";
+ do TYPE= "Type 1","Type 2","Type 3","Type 4";
+  RATE=50 + ranuni(777)*50;
+  RATEC=cats(round(RATE,0.1),"%");
+  N="999";
+  output;
+ end; 
+end;
+run;
+ 
+ods graphics / reset
+               noborder
+               noscale
+               width=880 px
+               height=610 px
+               attrpriority=none
+               imagefmt=png
+;
+data attrmap;
+length id value fillcolor linecolor $20.;
+id="TRTP";value="Active";fillcolor="white";linecolor="black";fillpattern="L1";output;
+id="TRTP";value="Placebo";fillcolor="black";linecolor="black";fillpattern="";output;
+run;
+ 
+proc sgplot data=wk1 dattrmap=attrmap noborder;
+ 
+vbarparm  category=TYPE response=RATE / 
+          group=TRTP
+          groupdisplay=cluster
+          clusterwidth=0.6
+          barwidth=1
+  attrid=TRTP
+  name="P1"
+  fillpattern
+;
+text x=TYPE y=RATE text=RATEC/ 
+          group=TRTP
+          groupdisplay=cluster
+          clusterwidth=0.6
+  position=top
+  textattrs=(color=black size=13)
+;
+ 
+xaxis valueattrs=(size=13)
+       type=discrete
+       display=(noticks nolabel noline)
+;
+yaxis label="XXXX Rate (%)"
+      labelattrs=(size=13)
+  valueattrs=(size=13)
+  min=0
+  offsetmin=0
+;
+ 
+keylegend "P1" / 
+   noborder
+       location=inside
+       position=topright
+       across=1
+       title=""    valueattrs=(size=13)
+;
+ 
+  xaxistable N / x=TYPE class=TRTP location=outside valueattrs=(size=13 color=black) labelattrs=(size=13);
+run;
+
+~~~
   
 ---
  
-## `%sg014()` macro <a name="sg014-macro-15"></a> ######
+## `%sg014`  <a name="sg014-macro-15"></a> ######
+### Clustered bar chart of change from baseline with 95% confidence intervals over time by category.
 
-Macro: SG014
-Purpose: Clustered bar chart of change from baseline with 95% confidence intervals over time by category.
+<img width="558" height="396" alt="image" src="https://github.com/user-attachments/assets/6e93f662-c995-4db4-b11f-4a9d5ab3b655" />
 
+~~~sas
+data wk1;
+do ARELTIM=1,2,8,16,24;
+ ATPTN=choosen(whichn(ARELTIM,1,2,8,16,24),1,2,3,4,5);
+ do cate= "Category A","Category B","Category C","Category D","Category E";
+  CHG=1 + ranuni(777)*whichc(cate,"Category A","Category B","Category C","Category D","Category E");
+  if CHG>4 then CHG=3;
+  if cate="E" then CHG=CHG-abs(CHG)*0.8;
+  HCI=CHG+abs(CHG)*0.2;
+  LCI=CHG-abs(CHG)*0.1;
+  if HCI>4 then ast=cats("***");
+  else if HCI>3.5 then ast=cats("**");
+  else ast="";
+  output;
+ end; 
+end;
+run;
+ 
+ods graphics / reset
+               noborder
+               noscale
+               width=880 px
+               height=610 px
+               attrpriority=none
+               imagefmt=png
+;
+data attrmap;
+length id value fillcolor linecolor $20.;
+id="mymap1";value="Category A";fillcolor="white";linecolor="black";output;
+id="mymap1";value="Category B";fillcolor="lightgray";linecolor="black";output;
+id="mymap1";value="Category C";fillcolor="mediumgray";linecolor="black";output;
+id="mymap1";value="Category D";fillcolor="darkgray";linecolor="black";output;
+id="mymap1";value="Category E";fillcolor="gray";linecolor="black";output;
+ 
+run;
+ 
+ods proclabel="Clustered bar chart of change from baseline with 95% CI over time by category";
+proc sgplot data=wk1 dattrmap=attrmap;;
+ 
+vbarparm  category=ATPTN response=CHG / 
+          group=cate
+          groupdisplay=cluster
+          clusterwidth=0.8
+          barwidth=1
+          baseline=1
+  limitlower=LCI
+  limitupper=HCI
+  limitattrs=(color=black)
+          x2axis
+  attrid=mymap1
+  name="vbarparm"
+ ;
+text x=ATPTN y=HCI text=ast/ 
+          group=cate
+          groupdisplay=cluster
+          clusterwidth=0.8
+  position=top
+  textattrs=(color=black size=13)
+;
+refline 1.5 2.5 3.5 4.5  / 
+          axis=x2
+          lineattrs=(pattern=dash thickness=2)
+;
+x2axis values=(1 1.5 2 2.5 3 3.5 4 4.5 5)
+       type=linear display=(novalues noticks nolabel)
+;
+xaxis values=(1 2 3 4 5)
+       valuesdisplay=("1h" "2h" "8h" "16h" "24h")
+   valueattrs=(size=13)
+       type=linear
+       display=(noticks nolabel)
+;
+yaxis max=6 offsetmin=0 min=1
+      label="Change from Baseline (95% CI)"
+      labelattrs=(size=14)
+;
+keylegend "vbarparm" / 
+       location=inside
+       position=topright
+       across=1
+       title="";
+ 
+format ATPTN 8.;
+run;
+~~~
   
 ---
  
-## `%sg015()` macro <a name="sg015-macro-16"></a> ######
+## `%sg015` <a name="sg015-macro-16"></a> ######
+### Line plot of adjusted mean change from baseline with standard error over time by treatment group.
 
-Macro: SG015
-Purpose: Line plot of adjusted mean change from baseline with standard error over time by treatment group.
+<img width="514" height="286" alt="image" src="https://github.com/user-attachments/assets/61e0472c-dd10-4466-8587-6dacd07d3c38" />
 
+~~~sas
+data wk1;
+do TRT01PN=1 to 2;
+do AVISITN=1000,1030,1080,1150,1220,1290,1360,1430,1500,1570;
+if AVISITN=1000 then estimate=0;
+if AVISITN=1030 & TRT01PN=2 then do;estimate=-1.89; end;
+if AVISITN=1030 & TRT01PN=1 then do;estimate=-2.91; end;
+ 
+if AVISITN=1080 & TRT01PN=2 then do;estimate=-2.53; end;
+if AVISITN=1080 & TRT01PN=1 then do;estimate=-6.18; end;
+ 
+if AVISITN=1150 & TRT01PN=2 then do;estimate=-3.01; end;
+if AVISITN=1150 & TRT01PN=1 then do;estimate=-8.79; end;
+ 
+if AVISITN=1220 & TRT01PN=2 then do;estimate=-3.71; end;
+if AVISITN=1220 & TRT01PN=1 then do;estimate=-9.78; end;
+ 
+if AVISITN=1290 & TRT01PN=2 then do;estimate=-3.50; end;
+if AVISITN=1290 & TRT01PN=1 then do;estimate=-10.78; end;
+ 
+if AVISITN=1360 & TRT01PN=2 then do;estimate=-3.42; end;
+if AVISITN=1360 & TRT01PN=1 then do;estimate=-11.92; end;
+ 
+if AVISITN=1430 & TRT01PN=2 then do;estimate=-3.15; end;
+if AVISITN=1430 & TRT01PN=1 then do;estimate=-11.83; end;
+ 
+if AVISITN=1500 & TRT01PN=2 then do;estimate=-3.91; end;
+if AVISITN=1500 & TRT01PN=1 then do;estimate=-12.14; end;
+ 
+if AVISITN=1570 & TRT01PN=2 then do;estimate=-3.34; end;
+if AVISITN=1570 & TRT01PN=1 then do;estimate=-12.56; end;
+output;
+end;
+end;
+run;
+ 
+data wk2;
+length out1-out3 $20.;
+set wk1;
+if TRT01PN=1  then do;
+ upper=estimate+(estimate*0.2);
+ lower=estimate-(estimate*0.2);
+end;
+if TRT01PN=2  then do;
+ upper=estimate+(estimate*0.6);
+ lower=estimate-(estimate*0.6);
+end;
+ 
+out1="XXX";
+out2="XXX";
+out3="XXX";
+ 
+if AVISITN in (1150) then do;
+out3="0.042 * ";
+astarisk_y=round(Estimate +0.2,1e-10);
+end;
+if AVISITN in (1290,1360) then do;
+out3="<.0001 *";
+astarisk_y=round(Estimate +0.2,1e-10);
+end;
+ 
+astarisk="   *";
+ 
+ 
+run;
+ 
+proc format ;
+value TRT01PN 1="Active" 2="Placebo";
+run;
+ods graphics / reset
+               noborder
+               noscale
+               width=780 px
+               height=450 px
+               attrpriority=none
+               imagefmt=png
+;
+proc sgplot data=wk2 noborder ;
+styleattrs datacontrastcolors=(black black)
+   datalinepatterns=( solid dash)
+                   datasymbols=(  CircleFilled circle); 
+ 
+series x=AVISITN y=estimate /group=trt01pn groupdisplay=cluster clusterwidth=0.2  markers markerattrs = (size=8) name="name1";
+ 
+scatter x=AVISITN y=estimate/group=trt01pn  groupdisplay=cluster clusterwidth=0.2 yerrorupper=upper yerrorlower=lower 
+                                  markerattrs = (size=0);
+text x=AVISITN y=astarisk_y text=astarisk/group=trt01pn  groupdisplay=cluster clusterwidth=0.2 position=TOPRIGHT;
+ 
+ 
+refline 0 / axis=y lineattrs=(pattern=shortdash);
+ 
+keylegend "name1"/title=""  exclude=(".") location=inside position=topright across=1 noborder valueattrs=(size=10) sortorder=ascending;
+ 
+xaxis offsetmin=0.02 offsetmax=0.1 values=(1000,1030,1080,1150,1220,1290,1360,1430,1500,1570) 
+                                                        valuesdisplay=("Baseline" "3" "8" "15" "22" "29" "36" "43" "50" "57") type=discrete labelattrs=(size=12) label="Time point (Day)";
+yaxis  offsetmax=0.05  labelattrs=(size=12)  values=(-20 to 2 by 2 ) valuesdisplay=("" "" "" "" "" "" "" "" "" "" "0") label="Adjusted Mean (SE) in Change from Baseline";
+ 
+  xaxistable  out1/ x=AVISITN valueattrs=(size=9) location=outside label="Difference";
+  xaxistable  out2/ x=AVISITN valueattrs=(size=9) location=outside label="[95％ CI]";
+  xaxistable  out3/ x=AVISITN valueattrs=(size=9) location=outside label="p-value";
+ 
+  format trt01pn trt01pn.;
+run ;
+~~~
   
 ---
  
