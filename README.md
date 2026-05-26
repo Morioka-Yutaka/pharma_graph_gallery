@@ -1478,68 +1478,840 @@ run;
   
 ---
  
-## `%sg022()` macro <a name="sg022-macro-22"></a> ######
+## `%sg022` <a name="sg022-macro-22"></a> ######
+### Subject-level profile plot in a crossover study.
 
-Macro: SG022
-Purpose: Subject-level profile plot in a crossover study.
+<img width="378" height="327" alt="image" src="https://github.com/user-attachments/assets/aa0b9e0d-dc18-4a63-ad71-c7fbf6bb5ff6" />
 
+~~~sas
+data wk1;
+length TRTAN 8.  SUBJID $20.  AVAL 8.;
+call streaminit(777);
+do TRTAN=1 to 2;
+  do sub = 1 to 20;
+    if sub <=10 then TRT01AN=1;
+    else  TRT01AN=2;
+    SUBJID=put(sub,z3.);
+      if TRTAN=1 then AVAL = rand("normal", 20, 2);
+      if TRTAN=2 then AVAL = rand("normal", 21, 3);
+      output;
+   end;
+end;
+keep TRTAN TRT01AN SUBJID AVAL;
+run;
+proc format ;
+value TRT01AN 1= "Active to Placebo sequence (Active/Placebo)" 2="Placebo to Active sequence (Placebo/Active)";
+run;
+ods graphics / reset
+               noborder
+               noscale
+               width=580 px
+               height=510 px
+               attrpriority=none
+               imagefmt=png
+;
+proc sgplot data=wk1 noborder noautolegend;
+  series x=TRTAN y=AVAL /group=SUBJID grouplc=TRT01AN groupmc=TRT01AN markers lineattrs=(pattern=solid thickness=1) markerattrs = (size=7 symbol=circlefilled) name="series";
+  xaxis offsetmin=0.2 offsetmax=0.2 labelattrs=(size=10) display=(nolabel) values=(1 2) valuesdisplay=("Active" "Placebo") type=discrete ;
+  yaxis  offsetmax=0.07 labelattrs=(size=10)  values=(10 to  30 by 5) ;
+  keylegend "series" / title="" noborder type=linecolor valueattrs=(size=10) 
+         location=inside position=bottomright across=1 opaque;
+  format TRT01AN TRT01AN.;
+run ;
+
+~~~
   
 ---
  
-## `%sg023()` macro <a name="sg023-macro-23"></a> ######
+## `%sg023`  <a name="sg023-macro-23"></a> ######
+### eDISH scatter plot of liver enzyme and bilirubin abnormalities.
 
-Macro: SG023
-Purpose: eDISH scatter plot of liver enzyme and bilirubin abnormalities.
+<img width="438" height="324" alt="image" src="https://github.com/user-attachments/assets/af41a16a-d53c-4d5e-9c17-20918fd4c2d0" />
 
+~~~sas
+data ADLB;
+  LENGTH USUBJID $12 PARAMCD $6 TRTA $12 ABLFL $1 TRTEMFL $1;
+  FORMAT ADT YYMMDD10.;
+ 
+  USUBJID="SUBJ001"; PARAMCD="ALT";   AVAL=45;  ANRHI=40;  TRTA="Active"; ADT=input("2023-01-01", yymmdd10.); ABLFL="Y"; TRTEMFL="N"; output;
+  USUBJID="SUBJ001"; PARAMCD="ALT";   AVAL=120; ANRHI=40;  TRTA="Active"; ADT=input("2023-01-15", yymmdd10.); ABLFL="N"; TRTEMFL="Y"; output;
+  USUBJID="SUBJ001"; PARAMCD="TBILI"; AVAL=1.0; ANRHI=1.2; TRTA="Active"; ADT=input("2023-01-01", yymmdd10.); ABLFL="Y"; TRTEMFL="N"; output;
+  USUBJID="SUBJ001"; PARAMCD="TBILI"; AVAL=2.8; ANRHI=1.2; TRTA="Active"; ADT=input("2023-01-15", yymmdd10.); ABLFL="N"; TRTEMFL="Y"; output;
+ 
+  USUBJID="SUBJ003"; PARAMCD="ALT";   AVAL=30;  ANRHI=40;  TRTA="Active"; ADT=input("2023-01-01", yymmdd10.); ABLFL="Y"; TRTEMFL="N"; output;
+  USUBJID="SUBJ003"; PARAMCD="ALT";   AVAL=85;  ANRHI=40;  TRTA="Active"; ADT=input("2023-01-20", yymmdd10.); ABLFL="N"; TRTEMFL="Y"; output;
+  USUBJID="SUBJ003"; PARAMCD="TBILI"; AVAL=0.7; ANRHI=1.2; TRTA="Active"; ADT=input("2023-01-01", yymmdd10.); ABLFL="Y"; TRTEMFL="N"; output;
+  USUBJID="SUBJ003"; PARAMCD="TBILI"; AVAL=1.5; ANRHI=1.2; TRTA="Active"; ADT=input("2023-01-20", yymmdd10.); ABLFL="N"; TRTEMFL="Y"; output;
+ 
+  USUBJID="SUBJ002"; PARAMCD="ALT";   AVAL=35;  ANRHI=40;  TRTA="Placebo"; ADT=input("2023-01-01", yymmdd10.); ABLFL="Y"; TRTEMFL="N"; output;
+  USUBJID="SUBJ002"; PARAMCD="ALT";   AVAL=55;  ANRHI=40;  TRTA="Placebo"; ADT=input("2023-01-10", yymmdd10.); ABLFL="N"; TRTEMFL="Y"; output;
+  USUBJID="SUBJ002"; PARAMCD="TBILI"; AVAL=0.8; ANRHI=1.2; TRTA="Placebo"; ADT=input("2023-01-01", yymmdd10.); ABLFL="Y"; TRTEMFL="N"; output;
+  USUBJID="SUBJ002"; PARAMCD="TBILI"; AVAL=1.0; ANRHI=1.2; TRTA="Placebo"; ADT=input("2023-01-10", yymmdd10.); ABLFL="N"; TRTEMFL="Y"; output;
+ 
+  USUBJID="SUBJ004"; PARAMCD="ALT";   AVAL=25;  ANRHI=40;  TRTA="Placebo"; ADT=input("2023-01-01", yymmdd10.); ABLFL="Y"; TRTEMFL="N"; output;
+  USUBJID="SUBJ004"; PARAMCD="ALT";   AVAL=150; ANRHI=40;  TRTA="Placebo"; ADT=input("2023-01-18", yymmdd10.); ABLFL="N"; TRTEMFL="Y"; output;
+  USUBJID="SUBJ004"; PARAMCD="TBILI"; AVAL=0.9; ANRHI=1.2; TRTA="Placebo"; ADT=input("2023-01-01", yymmdd10.); ABLFL="Y"; TRTEMFL="N"; output;
+  USUBJID="SUBJ004"; PARAMCD="TBILI"; AVAL=3.5; ANRHI=1.2; TRTA="Placebo"; ADT=input("2023-01-18", yymmdd10.); ABLFL="N"; TRTEMFL="Y"; output;
+ 
+  USUBJID="SUBJ005"; PARAMCD="ALT";   AVAL=20;  ANRHI=40;  TRTA="Active"; ADT=input("2023-01-01", yymmdd10.); ABLFL="Y"; TRTEMFL="N"; output;
+  USUBJID="SUBJ005"; PARAMCD="ALT";   AVAL=60;  ANRHI=40;  TRTA="Active"; ADT=input("2023-01-12", yymmdd10.); ABLFL="N"; TRTEMFL="Y"; output;
+  USUBJID="SUBJ005"; PARAMCD="TBILI"; AVAL=0.6; ANRHI=1.2; TRTA="Active"; ADT=input("2023-01-01", yymmdd10.); ABLFL="Y"; TRTEMFL="N"; output;
+  USUBJID="SUBJ005"; PARAMCD="TBILI"; AVAL=0.9; ANRHI=1.2; TRTA="Active"; ADT=input("2023-01-12", yymmdd10.); ABLFL="N"; TRTEMFL="Y"; output;
+ 
+  USUBJID="SUBJ006"; PARAMCD="ALT";   AVAL=5;   ANRHI=40;  TRTA="Active"; ADT=input("2023-01-01", yymmdd10.); ABLFL="Y"; TRTEMFL="N"; output;
+  USUBJID="SUBJ006"; PARAMCD="ALT";   AVAL=10;  ANRHI=40;  TRTA="Active"; ADT=input("2023-01-12", yymmdd10.); ABLFL="N"; TRTEMFL="Y"; output;
+  USUBJID="SUBJ006"; PARAMCD="TBILI"; AVAL=0.2; ANRHI=1.2; TRTA="Active"; ADT=input("2023-01-01", yymmdd10.); ABLFL="Y"; TRTEMFL="N"; output;
+  USUBJID="SUBJ006"; PARAMCD="TBILI"; AVAL=0.1; ANRHI=1.2; TRTA="Active"; ADT=input("2023-01-12", yymmdd10.); ABLFL="N"; TRTEMFL="Y"; output;
+ 
+  USUBJID="SUBJ006"; PARAMCD="ALT";   AVAL=1;   ANRHI=40;  TRTA="Active"; ADT=input("2023-01-01", yymmdd10.); ABLFL="Y"; TRTEMFL="N"; output;
+  USUBJID="SUBJ006"; PARAMCD="ALT";   AVAL=0.1; ANRHI=40;  TRTA="Active"; ADT=input("2023-01-12", yymmdd10.); ABLFL="N"; TRTEMFL="Y"; output;
+  USUBJID="SUBJ006"; PARAMCD="TBILI"; AVAL=6;   ANRHI=1.2; TRTA="Active"; ADT=input("2023-01-01", yymmdd10.); ABLFL="Y"; TRTEMFL="N"; output;
+  USUBJID="SUBJ006"; PARAMCD="TBILI"; AVAL=8;   ANRHI=1.2; TRTA="Active"; ADT=input("2023-01-12", yymmdd10.); ABLFL="N"; TRTEMFL="Y"; output;
+run;
+data adlb_xuln;
+  set adlb;
+  if not missing(aval) and not missing(anrhi) and anrhi > 0;
+  xuln = aval / anrhi;
+  if paramcd in ("ALT", "TBILI");
+run;
+proc sql;
+  create table edish_base as
+  select
+      usubjid,
+      max(case when paramcd = "ALT"   then xuln else . end) as altxuln,
+      max(case when paramcd = "TBILI" then xuln else . end) as bilixuln,
+      max(trta) as trta length=12
+  from adlb_xuln
+  group by usubjid;
+quit;
+ 
+options orientation=landscape;
+ods graphics / reset
+               noborder
+               noscale
+               width=680 px
+               height=510 px
+               attrpriority=none
+               imagefmt=png
+;
+proc sgplot data=edish_base noborder;
+    styleattrs datacontrastcolors=(blue red)
+                  datacolors=(blue red)
+                  datasymbols=(circlefilled trianglefilled);   
+ 
+  scatter x=altxuln y=bilixuln / 
+          group=trta
+          markerattrs=( size=10) name="scatter";
+ 
+  refline 1 / axis=x label="1 x ULN" labelattrs=(size=8) lineattrs=(pattern=shortdash color=black thickness=1);
+  refline 3 / axis=x label="3 x ULN" labelattrs=(size=8) lineattrs=(pattern=solid color=black thickness=1);
+  refline 1 / axis=y label="1 x ULN" labelattrs=(size=8) lineattrs=(pattern=shortdash color=black thickness=1);
+  refline 2 / axis=y label="2 x ULN" labelattrs=(size=8) lineattrs=(pattern=solid color=black thickness=1);
+ 
+  xaxis type=log logbase=10
+        min=0.1 max=30
+        label="Peak ALT (x ULN)"
+        values=(0.01 0.1 0.3 1 3 10 100)
+        grid;
+ 
+  yaxis type=log logbase=10
+        min=0.1 max=10
+        label="Peak Total Bilirubin (x ULN)"
+        values=(0.0625 0.125 0.25 0.5 1 2 4 8 16 32)
+        grid;
+ 
+  keylegend "scatter" / title="" noborder valueattrs=(size=10) 
+         location=inside position=topleft across=1 opaque;
+run;
+
+~~~
+
+---
+ 
+## `%sg024`  <a name="sg024-macro-24"></a> ######
+### Purpose: Swimmer plot of subject-level treatment duration and events.
+
+<img width="644" height="390" alt="image" src="https://github.com/user-attachments/assets/66d739f4-456f-4f46-b21e-6cd79ab3e421" />
+
+~~~sas
+data dummy_swimmer;
+length USUBJID $8 PARAMCD $12 PARAM $40 AVALC ONGOING $2;
+USUBJID="SUBJ001"; PARAMCD="OBS"; PARAM="Observation period"; STDY=1; ENDY=210; AVALC=""; ONGOING="Y"; output;
+USUBJID="SUBJ001"; PARAMCD="RESP"; PARAM="Overall response"; STDY=28; ENDY=.; AVALC="SD"; ONGOING=""; output;
+USUBJID="SUBJ001"; PARAMCD="RESP"; PARAM="Overall response"; STDY=56; ENDY=.; AVALC="PR"; ONGOING=""; output;
+USUBJID="SUBJ001"; PARAMCD="RESP"; PARAM="Overall response"; STDY=84; ENDY=.; AVALC="PR"; ONGOING=""; output;
+USUBJID="SUBJ001"; PARAMCD="RESP"; PARAM="Overall response"; STDY=140; ENDY=.; AVALC="CR"; ONGOING=""; output;
+USUBJID="SUBJ001"; PARAMCD="RESP"; PARAM="Overall response"; STDY=196; ENDY=.; AVALC="CR"; ONGOING=""; output;
+USUBJID="SUBJ001"; PARAMCD="DUR"; PARAM="Response duration"; STDY=56; ENDY=196; AVALC="CR"; ONGOING=""; output;
+USUBJID="SUBJ002"; PARAMCD="OBS"; PARAM="Observation period"; STDY=1; ENDY=168; AVALC=""; ONGOING="N"; output;
+USUBJID="SUBJ002"; PARAMCD="RESP"; PARAM="Overall response"; STDY=21; ENDY=.; AVALC="SD"; ONGOING=""; output;
+USUBJID="SUBJ002"; PARAMCD="RESP"; PARAM="Overall response"; STDY=42; ENDY=.; AVALC="SD"; ONGOING=""; output;
+USUBJID="SUBJ002"; PARAMCD="RESP"; PARAM="Overall response"; STDY=63; ENDY=.; AVALC="PR"; ONGOING=""; output;
+USUBJID="SUBJ002"; PARAMCD="RESP"; PARAM="Overall response"; STDY=105; ENDY=.; AVALC="PD"; ONGOING=""; output;
+USUBJID="SUBJ002"; PARAMCD="DUR"; PARAM="Response duration"; STDY=63; ENDY=105; AVALC="PR"; ONGOING=""; output;
+USUBJID="SUBJ003"; PARAMCD="OBS"; PARAM="Observation period"; STDY=1; ENDY=252; AVALC=""; ONGOING="N"; output;
+USUBJID="SUBJ003"; PARAMCD="RESP"; PARAM="Overall response"; STDY=28; ENDY=.; AVALC="SD"; ONGOING=""; output;
+USUBJID="SUBJ003"; PARAMCD="RESP"; PARAM="Overall response"; STDY=56; ENDY=.; AVALC="SD"; ONGOING=""; output;
+USUBJID="SUBJ003"; PARAMCD="RESP"; PARAM="Overall response"; STDY=84; ENDY=.; AVALC="PR"; ONGOING=""; output;
+USUBJID="SUBJ003"; PARAMCD="RESP"; PARAM="Overall response"; STDY=112; ENDY=.; AVALC="CR"; ONGOING=""; output;
+USUBJID="SUBJ003"; PARAMCD="RESP"; PARAM="Overall response"; STDY=168; ENDY=.; AVALC="CR"; ONGOING=""; output;
+USUBJID="SUBJ003"; PARAMCD="RESP"; PARAM="Overall response"; STDY=224; ENDY=.; AVALC="PR"; ONGOING=""; output;
+USUBJID="SUBJ003"; PARAMCD="DUR"; PARAM="Response duration"; STDY=84; ENDY=224; AVALC="CR"; ONGOING=""; output;
+USUBJID="SUBJ004"; PARAMCD="OBS"; PARAM="Observation period"; STDY=1; ENDY=98; AVALC=""; ONGOING="Y"; output;
+USUBJID="SUBJ004"; PARAMCD="RESP"; PARAM="Overall response"; STDY=14; ENDY=.; AVALC="SD"; ONGOING=""; output;
+USUBJID="SUBJ004"; PARAMCD="RESP"; PARAM="Overall response"; STDY=28; ENDY=.; AVALC="SD"; ONGOING=""; output;
+USUBJID="SUBJ004"; PARAMCD="RESP"; PARAM="Overall response"; STDY=56; ENDY=.; AVALC="PD"; ONGOING=""; output;
+USUBJID="SUBJ005"; PARAMCD="OBS"; PARAM="Observation period"; STDY=1; ENDY=301; AVALC=""; ONGOING="Y"; output;
+USUBJID="SUBJ005"; PARAMCD="RESP"; PARAM="Overall response"; STDY=30; ENDY=.; AVALC="SD"; ONGOING=""; output;
+USUBJID="SUBJ005"; PARAMCD="RESP"; PARAM="Overall response"; STDY=60; ENDY=.; AVALC="PR"; ONGOING=""; output;
+USUBJID="SUBJ005"; PARAMCD="RESP"; PARAM="Overall response"; STDY=90; ENDY=.; AVALC="PR"; ONGOING=""; output;
+USUBJID="SUBJ005"; PARAMCD="RESP"; PARAM="Overall response"; STDY=150; ENDY=.; AVALC="CR"; ONGOING=""; output;
+USUBJID="SUBJ005"; PARAMCD="RESP"; PARAM="Overall response"; STDY=210; ENDY=.; AVALC="CR"; ONGOING=""; output;
+USUBJID="SUBJ005"; PARAMCD="RESP"; PARAM="Overall response"; STDY=270; ENDY=.; AVALC="CR"; ONGOING=""; output;
+USUBJID="SUBJ005"; PARAMCD="DUR"; PARAM="Response duration"; STDY=60; ENDY=270; AVALC="CR"; ONGOING=""; output;
+USUBJID="SUBJ006"; PARAMCD="OBS"; PARAM="Observation period"; STDY=1; ENDY=126; AVALC=""; ONGOING="N"; output;
+USUBJID="SUBJ006"; PARAMCD="RESP"; PARAM="Overall response"; STDY=21; ENDY=.; AVALC="SD"; ONGOING=""; output;
+USUBJID="SUBJ006"; PARAMCD="RESP"; PARAM="Overall response"; STDY=42; ENDY=.; AVALC="PR"; ONGOING=""; output;
+USUBJID="SUBJ006"; PARAMCD="RESP"; PARAM="Overall response"; STDY=63; ENDY=.; AVALC="SD"; ONGOING=""; output;
+USUBJID="SUBJ006"; PARAMCD="RESP"; PARAM="Overall response"; STDY=84; ENDY=.; AVALC="PD"; ONGOING=""; output;
+USUBJID="SUBJ006"; PARAMCD="DUR"; PARAM="Response duration"; STDY=42; ENDY=63; AVALC="PR"; ONGOING=""; output;
+USUBJID="SUBJ007"; PARAMCD="OBS"; PARAM="Observation period"; STDY=1; ENDY=224; AVALC=""; ONGOING="N"; output;
+USUBJID="SUBJ007"; PARAMCD="RESP"; PARAM="Overall response"; STDY=28; ENDY=.; AVALC="SD"; ONGOING=""; output;
+USUBJID="SUBJ007"; PARAMCD="RESP"; PARAM="Overall response"; STDY=56; ENDY=.; AVALC="PR"; ONGOING=""; output;
+USUBJID="SUBJ007"; PARAMCD="RESP"; PARAM="Overall response"; STDY=112; ENDY=.; AVALC="PR"; ONGOING=""; output;
+USUBJID="SUBJ007"; PARAMCD="RESP"; PARAM="Overall response"; STDY=168; ENDY=.; AVALC="SD"; ONGOING=""; output;
+USUBJID="SUBJ007"; PARAMCD="RESP"; PARAM="Overall response"; STDY=210; ENDY=.; AVALC="PD"; ONGOING=""; output;
+USUBJID="SUBJ007"; PARAMCD="DUR"; PARAM="Response duration"; STDY=56; ENDY=112; AVALC="PR"; ONGOING=""; output;
+USUBJID="SUBJ008"; PARAMCD="OBS"; PARAM="Observation period"; STDY=1; ENDY=182; AVALC=""; ONGOING="Y"; output;
+USUBJID="SUBJ008"; PARAMCD="RESP"; PARAM="Overall response"; STDY=26; ENDY=.; AVALC="SD"; ONGOING=""; output;
+USUBJID="SUBJ008"; PARAMCD="RESP"; PARAM="Overall response"; STDY=52; ENDY=.; AVALC="SD"; ONGOING=""; output;
+USUBJID="SUBJ008"; PARAMCD="RESP"; PARAM="Overall response"; STDY=78; ENDY=.; AVALC="SD"; ONGOING=""; output;
+USUBJID="SUBJ008"; PARAMCD="RESP"; PARAM="Overall response"; STDY=130; ENDY=.; AVALC="PD"; ONGOING=""; output;
+USUBJID="SUBJ009"; PARAMCD="OBS"; PARAM="Observation period"; STDY=1; ENDY=336; AVALC=""; ONGOING="N"; output;
+USUBJID="SUBJ009"; PARAMCD="RESP"; PARAM="Overall response"; STDY=28; ENDY=.; AVALC="PR"; ONGOING=""; output;
+USUBJID="SUBJ009"; PARAMCD="RESP"; PARAM="Overall response"; STDY=56; ENDY=.; AVALC="CR"; ONGOING=""; output;
+USUBJID="SUBJ009"; PARAMCD="RESP"; PARAM="Overall response"; STDY=84; ENDY=.; AVALC="CR"; ONGOING=""; output;
+USUBJID="SUBJ009"; PARAMCD="RESP"; PARAM="Overall response"; STDY=140; ENDY=.; AVALC="CR"; ONGOING=""; output;
+USUBJID="SUBJ009"; PARAMCD="RESP"; PARAM="Overall response"; STDY=196; ENDY=.; AVALC="PR"; ONGOING=""; output;
+USUBJID="SUBJ009"; PARAMCD="RESP"; PARAM="Overall response"; STDY=280; ENDY=.; AVALC="SD"; ONGOING=""; output;
+USUBJID="SUBJ009"; PARAMCD="DUR"; PARAM="Response duration"; STDY=28; ENDY=196; AVALC="CR"; ONGOING=""; output;
+USUBJID="SUBJ010"; PARAMCD="OBS"; PARAM="Observation period"; STDY=1; ENDY=154; AVALC=""; ONGOING="Y"; output;
+USUBJID="SUBJ010"; PARAMCD="RESP"; PARAM="Overall response"; STDY=22; ENDY=.; AVALC="SD"; ONGOING=""; output;
+USUBJID="SUBJ010"; PARAMCD="RESP"; PARAM="Overall response"; STDY=44; ENDY=.; AVALC="PR"; ONGOING=""; output;
+USUBJID="SUBJ010"; PARAMCD="RESP"; PARAM="Overall response"; STDY=88; ENDY=.; AVALC="PR"; ONGOING=""; output;
+USUBJID="SUBJ010"; PARAMCD="RESP"; PARAM="Overall response"; STDY=132; ENDY=.; AVALC="PD"; ONGOING=""; output;
+USUBJID="SUBJ010"; PARAMCD="DUR"; PARAM="Response duration"; STDY=44; ENDY=88; AVALC="PR"; ONGOING=""; output;
+USUBJID="SUBJ011"; PARAMCD="OBS"; PARAM="Observation period"; STDY=1; ENDY=275; AVALC=""; ONGOING="N"; output;
+USUBJID="SUBJ011"; PARAMCD="RESP"; PARAM="Overall response"; STDY=25; ENDY=.; AVALC="SD"; ONGOING=""; output;
+USUBJID="SUBJ011"; PARAMCD="RESP"; PARAM="Overall response"; STDY=50; ENDY=.; AVALC="SD"; ONGOING=""; output;
+USUBJID="SUBJ011"; PARAMCD="RESP"; PARAM="Overall response"; STDY=75; ENDY=.; AVALC="PR"; ONGOING=""; output;
+USUBJID="SUBJ011"; PARAMCD="RESP"; PARAM="Overall response"; STDY=125; ENDY=.; AVALC="PR"; ONGOING=""; output;
+USUBJID="SUBJ011"; PARAMCD="RESP"; PARAM="Overall response"; STDY=175; ENDY=.; AVALC="CR"; ONGOING=""; output;
+USUBJID="SUBJ011"; PARAMCD="RESP"; PARAM="Overall response"; STDY=225; ENDY=.; AVALC="CR"; ONGOING=""; output;
+USUBJID="SUBJ011"; PARAMCD="DUR"; PARAM="Response duration"; STDY=75; ENDY=225; AVALC="CR"; ONGOING=""; output;
+USUBJID="SUBJ012"; PARAMCD="OBS"; PARAM="Observation period"; STDY=1; ENDY=119; AVALC=""; ONGOING="N"; output;
+USUBJID="SUBJ012"; PARAMCD="RESP"; PARAM="Overall response"; STDY=17; ENDY=.; AVALC="SD"; ONGOING=""; output;
+USUBJID="SUBJ012"; PARAMCD="RESP"; PARAM="Overall response"; STDY=34; ENDY=.; AVALC="SD"; ONGOING=""; output;
+USUBJID="SUBJ012"; PARAMCD="RESP"; PARAM="Overall response"; STDY=68; ENDY=.; AVALC="PD"; ONGOING=""; output;
+USUBJID="SUBJ013"; PARAMCD="OBS"; PARAM="Observation period"; STDY=1; ENDY=245; AVALC=""; ONGOING="N"; output;
+USUBJID="SUBJ013"; PARAMCD="RESP"; PARAM="Overall response"; STDY=35; ENDY=.; AVALC="SD"; ONGOING=""; output;
+USUBJID="SUBJ013"; PARAMCD="RESP"; PARAM="Overall response"; STDY=70; ENDY=.; AVALC="PR"; ONGOING=""; output;
+USUBJID="SUBJ013"; PARAMCD="RESP"; PARAM="Overall response"; STDY=105; ENDY=.; AVALC="SD"; ONGOING=""; output;
+USUBJID="SUBJ013"; PARAMCD="RESP"; PARAM="Overall response"; STDY=140; ENDY=.; AVALC="PR"; ONGOING=""; output;
+USUBJID="SUBJ013"; PARAMCD="RESP"; PARAM="Overall response"; STDY=210; ENDY=.; AVALC="PD"; ONGOING=""; output;
+USUBJID="SUBJ013"; PARAMCD="DUR"; PARAM="Response duration"; STDY=70; ENDY=70; AVALC="PR"; ONGOING=""; output;
+USUBJID="SUBJ013"; PARAMCD="DUR"; PARAM="Response duration"; STDY=140; ENDY=140; AVALC="PR"; ONGOING=""; output;
+USUBJID="SUBJ014"; PARAMCD="OBS"; PARAM="Observation period"; STDY=1; ENDY=196; AVALC=""; ONGOING="Y"; output;
+USUBJID="SUBJ014"; PARAMCD="RESP"; PARAM="Overall response"; STDY=28; ENDY=.; AVALC="SD"; ONGOING=""; output;
+USUBJID="SUBJ014"; PARAMCD="RESP"; PARAM="Overall response"; STDY=56; ENDY=.; AVALC="SD"; ONGOING=""; output;
+USUBJID="SUBJ014"; PARAMCD="RESP"; PARAM="Overall response"; STDY=84; ENDY=.; AVALC="PR"; ONGOING=""; output;
+USUBJID="SUBJ014"; PARAMCD="RESP"; PARAM="Overall response"; STDY=112; ENDY=.; AVALC="PR"; ONGOING=""; output;
+USUBJID="SUBJ014"; PARAMCD="RESP"; PARAM="Overall response"; STDY=168; ENDY=.; AVALC="SD"; ONGOING=""; output;
+USUBJID="SUBJ014"; PARAMCD="DUR"; PARAM="Response duration"; STDY=84; ENDY=112; AVALC="PR"; ONGOING=""; output;
+USUBJID="SUBJ015"; PARAMCD="OBS"; PARAM="Observation period"; STDY=1; ENDY=322; AVALC=""; ONGOING="N"; output;
+USUBJID="SUBJ015"; PARAMCD="RESP"; PARAM="Overall response"; STDY=46; ENDY=.; AVALC="SD"; ONGOING=""; output;
+USUBJID="SUBJ015"; PARAMCD="RESP"; PARAM="Overall response"; STDY=92; ENDY=.; AVALC="PR"; ONGOING=""; output;
+USUBJID="SUBJ015"; PARAMCD="RESP"; PARAM="Overall response"; STDY=138; ENDY=.; AVALC="CR"; ONGOING=""; output;
+USUBJID="SUBJ015"; PARAMCD="RESP"; PARAM="Overall response"; STDY=184; ENDY=.; AVALC="CR"; ONGOING=""; output;
+USUBJID="SUBJ015"; PARAMCD="RESP"; PARAM="Overall response"; STDY=230; ENDY=.; AVALC="CR"; ONGOING=""; output;
+USUBJID="SUBJ015"; PARAMCD="RESP"; PARAM="Overall response"; STDY=276; ENDY=.; AVALC="CR"; ONGOING=""; output;
+USUBJID="SUBJ015"; PARAMCD="DUR"; PARAM="Response duration"; STDY=92; ENDY=276; AVALC="CR"; ONGOING=""; output;
+USUBJID="SUBJ016"; PARAMCD="OBS"; PARAM="Observation period"; STDY=1; ENDY=147; AVALC=""; ONGOING="N"; output;
+USUBJID="SUBJ016"; PARAMCD="RESP"; PARAM="Overall response"; STDY=21; ENDY=.; AVALC="SD"; ONGOING=""; output;
+USUBJID="SUBJ016"; PARAMCD="RESP"; PARAM="Overall response"; STDY=42; ENDY=.; AVALC="SD"; ONGOING=""; output;
+USUBJID="SUBJ016"; PARAMCD="RESP"; PARAM="Overall response"; STDY=63; ENDY=.; AVALC="SD"; ONGOING=""; output;
+USUBJID="SUBJ016"; PARAMCD="RESP"; PARAM="Overall response"; STDY=105; ENDY=.; AVALC="PD"; ONGOING=""; output;
+USUBJID="SUBJ017"; PARAMCD="OBS"; PARAM="Observation period"; STDY=1; ENDY=287; AVALC=""; ONGOING="N"; output;
+USUBJID="SUBJ017"; PARAMCD="RESP"; PARAM="Overall response"; STDY=41; ENDY=.; AVALC="SD"; ONGOING=""; output;
+USUBJID="SUBJ017"; PARAMCD="RESP"; PARAM="Overall response"; STDY=82; ENDY=.; AVALC="PR"; ONGOING=""; output;
+USUBJID="SUBJ017"; PARAMCD="RESP"; PARAM="Overall response"; STDY=123; ENDY=.; AVALC="PR"; ONGOING=""; output;
+USUBJID="SUBJ017"; PARAMCD="RESP"; PARAM="Overall response"; STDY=164; ENDY=.; AVALC="CR"; ONGOING=""; output;
+USUBJID="SUBJ017"; PARAMCD="RESP"; PARAM="Overall response"; STDY=205; ENDY=.; AVALC="PR"; ONGOING=""; output;
+USUBJID="SUBJ017"; PARAMCD="RESP"; PARAM="Overall response"; STDY=246; ENDY=.; AVALC="PD"; ONGOING=""; output;
+USUBJID="SUBJ017"; PARAMCD="DUR"; PARAM="Response duration"; STDY=82; ENDY=205; AVALC="CR"; ONGOING=""; output;
+USUBJID="SUBJ018"; PARAMCD="OBS"; PARAM="Observation period"; STDY=1; ENDY=203; AVALC=""; ONGOING="N"; output;
+USUBJID="SUBJ018"; PARAMCD="RESP"; PARAM="Overall response"; STDY=29; ENDY=.; AVALC="SD"; ONGOING=""; output;
+USUBJID="SUBJ018"; PARAMCD="RESP"; PARAM="Overall response"; STDY=58; ENDY=.; AVALC="PR"; ONGOING=""; output;
+USUBJID="SUBJ018"; PARAMCD="RESP"; PARAM="Overall response"; STDY=87; ENDY=.; AVALC="PR"; ONGOING=""; output;
+USUBJID="SUBJ018"; PARAMCD="RESP"; PARAM="Overall response"; STDY=145; ENDY=.; AVALC="PD"; ONGOING=""; output;
+USUBJID="SUBJ018"; PARAMCD="DUR"; PARAM="Response duration"; STDY=58; ENDY=87; AVALC="PR"; ONGOING=""; output;
+USUBJID="SUBJ019"; PARAMCD="OBS"; PARAM="Observation period"; STDY=1; ENDY=364; AVALC=""; ONGOING="Y"; output;
+USUBJID="SUBJ019"; PARAMCD="RESP"; PARAM="Overall response"; STDY=28; ENDY=.; AVALC="SD"; ONGOING=""; output;
+USUBJID="SUBJ019"; PARAMCD="RESP"; PARAM="Overall response"; STDY=56; ENDY=.; AVALC="PR"; ONGOING=""; output;
+USUBJID="SUBJ019"; PARAMCD="RESP"; PARAM="Overall response"; STDY=84; ENDY=.; AVALC="PR"; ONGOING=""; output;
+USUBJID="SUBJ019"; PARAMCD="RESP"; PARAM="Overall response"; STDY=112; ENDY=.; AVALC="CR"; ONGOING=""; output;
+USUBJID="SUBJ019"; PARAMCD="RESP"; PARAM="Overall response"; STDY=168; ENDY=.; AVALC="CR"; ONGOING=""; output;
+USUBJID="SUBJ019"; PARAMCD="RESP"; PARAM="Overall response"; STDY=224; ENDY=.; AVALC="CR"; ONGOING=""; output;
+USUBJID="SUBJ019"; PARAMCD="RESP"; PARAM="Overall response"; STDY=280; ENDY=.; AVALC="PR"; ONGOING=""; output;
+USUBJID="SUBJ019"; PARAMCD="RESP"; PARAM="Overall response"; STDY=336; ENDY=.; AVALC="SD"; ONGOING=""; output;
+USUBJID="SUBJ019"; PARAMCD="DUR"; PARAM="Response duration"; STDY=56; ENDY=280; AVALC="CR"; ONGOING=""; output;
+USUBJID="SUBJ020"; PARAMCD="OBS"; PARAM="Observation period"; STDY=1; ENDY=175; AVALC=""; ONGOING="Y"; output;
+USUBJID="SUBJ020"; PARAMCD="RESP"; PARAM="Overall response"; STDY=25; ENDY=.; AVALC="SD"; ONGOING=""; output;
+USUBJID="SUBJ020"; PARAMCD="RESP"; PARAM="Overall response"; STDY=50; ENDY=.; AVALC="SD"; ONGOING=""; output;
+USUBJID="SUBJ020"; PARAMCD="RESP"; PARAM="Overall response"; STDY=75; ENDY=.; AVALC="PR"; ONGOING=""; output;
+USUBJID="SUBJ020"; PARAMCD="RESP"; PARAM="Overall response"; STDY=100; ENDY=.; AVALC="PD"; ONGOING=""; output;
+USUBJID="SUBJ020"; PARAMCD="DUR"; PARAM="Response duration"; STDY=75; ENDY=75; AVALC="PR"; ONGOING=""; output;
+run;
+ 
+data dummy_swimmer1;
+set dummy_swimmer;
+select (AVALC);
+  when ("CR") CRDY=STDY;
+  when ("PR") PRDY=STDY;
+  when ("SD") SDDY=STDY;
+  when ("PD") PDDY=STDY;
+  otherwise;
+end;
+if PARAMCD="DUR" then do;
+  DURSTDY=STDY;
+  DURENDY=ENDY;
+end;
+if PARAMCD="OBS" then do;
+  OBSSTDY=STDY;
+  OBSENDY=ENDY;
+end;
+if ONGOING="Y" then highcap ="FilledArrow";
+retain yno;
+if _N_=1 then yno=0;
+L_USUBJID=lag(USUBJID);
+if USUBJID ne L_USUBJID then yno +1;
+ 
+drop L_USUBJID;
+run;
+ 
+ods graphics / reset
+               noborder
+               noscale
+               width=980 px
+               height=610 px
+               attrpriority=none
+               imagefmt=png
+proc sgplot data= dummy_swimmer1 ;
+  highlow y=yno low=OBSSTDY high=OBSENDY / highcap=highcap type=bar fill nooutline 
+             dataskin=CRISP fillattrs=(color=silver ) lineattrs=(color=black) barwidth=1 ;
+  
+ highlow y=yno low=DURSTDY high=DURENDY / lineattrs=(thickness=2 color=black) name="status" legendlabel="Response Duration" ;
+  scatter y=yno x=CRDY / markerattrs=(symbol=circlefilled size=8 color=black) name="CR" legendlabel="CR";
+  scatter y=yno x=PRDY / markerattrs=(symbol=diamondfilled size=8 color=black) name="PR" legendlabel="PR";
+  scatter y=yno x=SDDY / markerattrs=(symbol=squarefilled size=8 color=black) name="SD" legendlabel="SD";
+  scatter y=yno x=PDDY / markerattrs=(symbol=X size=8 color=black) name="PD" legendlabel="PD";
+  legenditem type=marker name="ongoing" /label="Ongoing" markerattrs=(symbol=trianglerightfilled color=silver size=10 ); 
+  yaxistable USUBJID / title=" " label=" " location=inside position=left labelattrs=(size=9) valueattrs=(size=8);
+  xaxis label="Day" values=(1 to 365 by 14 )  offsetmax=0.05;
+  yaxis reverse display=(noticks novalues noline) label="Participants" min=1 max=20 offsetmin=0 ;
+  keylegend "ongoing" "CR" "PR" "SD"  "PD"  "status"/  location=inside position=topright across=1;
+run;
+
+~~~
   
 ---
  
-## `%sg024()` macro <a name="sg024-macro-24"></a> ######
+## `%sg025`  <a name="sg025-macro-25"></a> ######
+### ROC curve of sensitivity versus false positive rate.
 
-Macro: SG024
-Purpose: Swimmer plot of subject-level treatment duration and events.
+<img width="386" height="378" alt="image" src="https://github.com/user-attachments/assets/d2d953d9-9bf0-4f6e-9a0f-189a82c5abf6" />
 
+~~~sas
+data roc_sample;
+  call streaminit(12345);
+  do id = 1 to 500;
+    age = rand("normal", 62, 10);
+    bmi = rand("normal", 24, 3);
+    latent = -8
+             + 0.06 * age
+             + 0.12 * bmi
+             + rand("normal", 0, 1);
+    p_disease = 1 / (1 + exp(-latent));
+    outcome = rand("bernoulli", p_disease);
+    if outcome = 1 then
+      biomarker = rand("normal", 75, 12);
+    else
+      biomarker = rand("normal", 55, 12);
+      biomarker = biomarker + 0.15 * (age - 60) + 0.4 * (bmi - 24);
+    output;
+  end;
+run;
+ods graphics on;
+ods output ROCCurve = ROCCurve;
+proc logistic data=roc_sample plots(only)=roc;
+  model outcome(event="1") = biomarker age bmi
+        / lackfit rsquare outroc=rocstats;
+  output out=pred predicted=pred;
+run;
+ 
+data wk1;
+  set rocstats;
+  specificity = 1 - _1MSPEC_;
+  youden_j = _SENSIT_ + specificity - 1;
+  distance = sqrt((1 - _SENSIT_)**2 + (1 - specificity)**2);
+run;
+ 
+proc sql noprint;
+  create table cutoff as
+  select
+      _PROB_   as cutoff_prob,
+      _SENSIT_ as cutoff_sens,
+      specificity as cutoff_spec,
+      youden_j,
+      distance
+  from wk1
+  having youden_j = max(youden_j);
+quit;
+ 
+data plot_roc;
+  set wk1;
+  if _n_ = 1 then set cutoff;
+  if _PROB_ = cutoff_prob then do;
+    star_x = _1MSPEC_;
+    star_y = _SENSIT_;
+  end;
+run;
+ 
+ 
+ods graphics / reset
+               noborder
+               noscale
+               width=600 px
+               height=600 px
+               attrpriority=none
+               imagefmt=png
+;
+proc sgplot data=plot_roc noautolegend aspect=1;
+  step x=_1MSPEC_ y=_SENSIT_
+    / lineattrs=(thickness=3 color=blue);
+ 
+  scatter x=star_x y=star_y
+    / markerattrs=(symbol=diamondfilled color=blue size=15) name="Youden" legendlabel="Cut off (max of Youden Index)";
+ 
+  lineparm x=0 y=0 slope=1
+    / transparency=0.3 lineattrs=(color=black pattern=shortdash thickness=2);
+ 
+  xaxis grid values=(0 to 1 by 0.25)
+    label="1 - Specificity"
+    labelattrs=(size=11) offsetmin=0.01 offsetmax=0.01;
+ 
+  yaxis grid values=(0 to 1 by 0.25)
+    label="Sensitivity"
+    labelattrs=(size=12 ) offsetmin=0.01 offsetmax=0.01;
+ 
+  keylegend "Youden" /location=inside position=bottomright;
+run;
+
+~~~
+---
+ 
+## `%sg026`  <a name="sg026-macro-26"></a> ######
+### Power model plot of pharmacokinetic exposure versus dose.
+
+<img width="452" height="257" alt="image" src="https://github.com/user-attachments/assets/50c59387-4a7e-4afa-a4d8-460f86c69da1" />
+
+~~~sas
+data power_sample;
+length SUBJID $20. DOSE 8. PPTEST $20.  AVAL 8.;
+call streaminit(777);
+k = 0.12;             
+  do sub = 1 to 11;
+    SUBJID=catx("-","SAMP",put(sub,z3.));
+     do DOSE = 20,40,80,160;
+      do PPTEST="CMAX";
+        AVAL = k * dose**2*0.001 * exp(rand("normal", 0, 0.15));
+        output;
+     end;
+  end;
+end;
+keep  SUBJID DOSE PPTEST AVAL;
+run;
+ 
+data power_sample_2;
+set power_sample;
+L_AVAL=log(AVAL);
+L_DOSE=log(DOSE);
+run;
+ 
+ods output ParameterEstimates=ParameterEstimates;
+proc reg data=power_sample_2;
+model L_AVAL=L_DOSE/clb;
+run;
+quit;
+ 
+ proc transpose data=ParameterEstimates out=ParameterEstimates_1;
+ var Estimate;
+ id Variable;
+run;
+ 
+data _null_;
+set ParameterEstimates;
+if Variable="Intercept" then call symputx("Intercept",round(Estimate,0.0001));
+if Variable="L_DOSE" then do;
+   if 0 <= Estimate then call symputx("beta",catx(" ","+",round(Estimate,0.0001)));
+   if 0 > Estimate then call symputx("beta",catx(" ","-",round(abs(Estimate),0.0001)));
+end;
+run;
+%put &=beta;
+data ParameterEstimates_2;
+set ParameterEstimates_1;
+do x = 0 to 200 by 1;
+  RF=exp(Intercept) * x ** L_DOSE ;
+  output;
+end;
+run;
+ 
+data power_sample_3;
+ set power_sample_2 ParameterEstimates_2;
+run;
+ 
+ods graphics / reset
+               noborder
+               noscale
+               width=700 px
+               height=400 px
+               attrpriority=none
+               imagefmt=png
+;
+proc sgplot data=power_sample_3 noborder noautolegend;
+inset "Power model : ln (Cmax) = &Intercept &beta. × ln (Dose) + Random error" / position=bottomright;
+scatter x=DOSE y=AVAL /group=SUBJID   markerattrs=(color=black size=5 symbol=circlefilled) name="name1" ;
+xaxis offsetmin=0.02 offsetmax=0.1labelattrs=(size=10) label="Dosage (mg)" values=(0 20 40 80 160);
+yaxis  offsetmax=0.07  labelattrs=(size=10) label="Cmax (ng/mL)" values=(0 to 5 by 0.5) ;
+series x=x y=RF /lineattrs=(color=black);
+run ;
+
+~~~
   
 ---
  
-## `%sg025()` macro <a name="sg025-macro-25"></a> ######
+## `%sg027` <a name="sg027-macro-27"></a> ######
+### Funnel plot of effect estimate versus standard error.
 
-Macro: SG025
-Purpose: ROC curve of sensitivity versus false positive rate.
+<img width="458" height="254" alt="image" src="https://github.com/user-attachments/assets/1236621f-272a-435d-b6f0-9a645224aacd" />
 
+~~~sas
+data meta_dat;
+  length study $20;
+  study="Study01"; yi=0.12;  sei=0.08; output;
+  study="Study02"; yi=0.05;  sei=0.10; output;
+  study="Study03"; yi=0.18;  sei=0.12; output;
+  study="Study04"; yi=-0.02; sei=0.09; output;
+  study="Study05"; yi=0.30;  sei=0.15; output;
+  study="Study06"; yi=0.22;  sei=0.11; output;
+  study="Study07"; yi=-0.10; sei=0.14; output;
+  study="Study08"; yi=0.08;  sei=0.07; output;
+  study="Study09"; yi=0.40;  sei=0.20; output;
+  study="Study10"; yi=0.15;  sei=0.09; output;
+run; 
+data meta_w;
+set meta_dat;
+w = 1/(sei*sei);
+wy = w*yi;
+run;
+ 
+proc sql noprint;
+select sum(wy)/sum(w), max(sei)
+into :pooled, :maxse
+from meta_w;
+quit;
+ 
+%put pooled=&pooled;
+ 
+data funnel_line;
+do sei=0 to &maxse by 0.001;
+ 
+    lower95=&pooled-1.96*sei;
+    upper95=&pooled+1.96*sei;
+ 
+    pooled=&pooled;
+ 
+    output;
+end;
+run;
+ 
+data plotdata;
+ 
+set meta_dat(in=a)
+    funnel_line(in=b);
+ 
+if a then type="POINT";
+if b then type="LINE";
+ 
+run;
+ 
+ods graphics / reset
+               noborder
+               noscale
+               width=700 px
+               height=400 px
+               attrpriority=none
+               imagefmt=png
+;
+proc sgplot data=plotdata noautolegend;
+scatter x=yi y=sei / 
+    group=type
+    markerattrs=(symbol=circlefilled size=9)
+    datalabel=study;
+ series x=lower95 y=sei / lineattrs=(thickness=2);
+ series x=upper95 y=sei / lineattrs=(thickness=2);
+refline &pooled / axis=x lineattrs=(pattern=dash thickness=2);
+yaxis reverse label="Standard Error";
+xaxis label="Effect Size";
+run;
+
+~~~
   
 ---
  
-## `%sg026()` macro <a name="sg026-macro-26"></a> ######
+## `%sg028`  <a name="sg028-macro-28"></a> ######
+### Funnel plot of effect estimate versus precision.
 
-Macro: SG026
-Purpose: Power model plot of pharmacokinetic exposure versus dose.
+<img width="453" height="258" alt="image" src="https://github.com/user-attachments/assets/d59a2bcb-fed2-4ac2-a499-0a7875a441b7" />
 
+~~~sas
+data meta_dat;
+  length study $20;
+  study="Study01"; yi=0.12;  sei=0.08; output;
+  study="Study02"; yi=0.05;  sei=0.10; output;
+  study="Study03"; yi=0.18;  sei=0.12; output;
+  study="Study04"; yi=-0.02; sei=0.09; output;
+  study="Study05"; yi=0.30;  sei=0.15; output;
+  study="Study06"; yi=0.22;  sei=0.11; output;
+  study="Study07"; yi=-0.10; sei=0.14; output;
+  study="Study08"; yi=0.08;  sei=0.07; output;
+  study="Study09"; yi=0.40;  sei=0.20; output;
+  study="Study10"; yi=0.15;  sei=0.09; output;
+run; 
+ 
+data meta_w;
+set meta_dat;
+w = 1/(sei*sei);
+wy = w*yi;
+precision = 1/sei;
+run;
+ 
+proc sql noprint;
+select sum(wy)/sum(w)
+     , max(precision)
+     , min(yi)
+     , max(yi)
+into :pooled
+   , :maxprec
+   , :minyi
+   , :maxyi
+from meta_w;
+quit;
+ 
+%put pooled=&pooled;
+%put maxprec=&maxprec;
+ 
+data funnel_curve;
+do precision = 0.05 to %sysevalf(&maxprec * 1.2) by 0.01;
+ 
+    lower95 = &pooled - 1.96/precision;
+    upper95 = &pooled + 1.96/precision;
+    pooledx  = &pooled;
+ 
+    output;
+end;
+run;
+ 
+data plotdata;
+length type $10 study $20;
+set meta_w(in=a keep=study yi sei precision)
+    funnel_curve(in=b);
+ 
+if a then type = "POINT";
+if b then type = "LINE";
+run;
+ 
+proc sql noprint;
+select min(xval), max(xval)
+into :xmin, :xmax
+from
+(
+    select yi      as xval from meta_w
+    outer union corr
+    select lower95 as xval from funnel_curve
+    outer union corr
+    select upper95 as xval from funnel_curve
+);
+quit;
+ 
+ods graphics / reset
+               noborder
+               noscale
+               width=700 px
+               height=400 px
+               attrpriority=none
+               imagefmt=png
+;
+proc sgplot data=plotdata noautolegend;
+scatter x=yi y=precision / 
+    markerattrs=(symbol=circlefilled size=9 color=blue)
+    datalabel=study;
+series x=lower95 y=precision / 
+    lineattrs=(thickness=2);
+series x=upper95 y=precision / 
+    lineattrs=(thickness=2);
+refline &pooled / axis=x
+    lineattrs=(pattern=dash thickness=2);
+xaxis label="Effect Size" values=(-1 to 1);
+yaxis label="Precision (1/SE)" values=(0 to 20);
+run;
+~~~
   
 ---
  
-## `%sg027()` macro <a name="sg027-macro-27"></a> ######
+## `%sg029`  <a name="sg029-macro-29"></a> ######
+### Heatmap of missing data patterns.
 
-Macro: SG027
-Purpose: Funnel plot of effect estimate versus standard error.
+<img width="676" height="424" alt="image" src="https://github.com/user-attachments/assets/01d97d80-c9a3-4a79-85db-98cc60b794b6" />
 
-  
----
+~~~sas
+data missing_map_sampke;
+call streaminit(123);
  
-## `%sg028()` macro <a name="sg028-macro-28"></a> ######
-
-Macro: SG028
-Purpose: Funnel plot of effect estimate versus precision.
-
-  
----
+length 
+    USUBJID $12
+    SEX $1
+    TRT $8
+    STRATA $5
+    FLAG $1
+    C01-C05 $20
+    N01-N08 8.
+    C06 $20
+    N09-N13 8.
+    C07-C12 $20
+    N14-N20 8.
+    C13-C16 $20
+    N20-N25 8.
+    C17-C20 $20;
  
-## `%sg029()` macro <a name="sg029-macro-29"></a> ######
+array nums N01-N25;
+array chars C01-C20;
+ 
+do i = 1 to 300;
+    USUBJID = cats("SUBJ", put(i, z4.));
+    
+    SEX = ifc(rand("uniform")<0.5,"M","F");
+    TRT = scan("Placebo DrugA DrugB DrugC", ceil(rand("uniform")*4));
+    STRATA = scan("Low Mid High", ceil(rand("uniform")*3));
+    FLAG = ifc(rand("uniform")<0.7,"Y","N");
+ 
+    do j = 1 to dim(nums);
+        if rand("uniform") < 0.15 then nums[j] = .;  
+        else nums[j] = rand("normal", 100, 15);
+    end;
+ 
+    do k = 1 to dim(chars);
+        if rand("uniform") < 0.20 then chars[k] = ""; 
+        else chars[k] = scan("A B C D E", ceil(rand("uniform")*5));
+    end;
+ 
+    output;
+end;
+ 
+drop i j k;
+run;
+ 
+ods output Position=Position;
+proc contents data=missing_map_sampke varnum;
+run;
+ 
+proc format;
+value catnf 
+      0   = "Null"
+      1   = "Numeric"
+      2   = "Charcter";
+run;
+data nullmap;
+length varname $20.;
+set missing_map_sampke;
+obs=_N_;
+array ar_num _numeric_;
+do over ar_num;
+ varname=vname(ar_num);
+ varn=_i_;
+ if missing(ar_num) then catn=0;
+ else catn=1;
+ output;
+end;
+array ar_character _char_;
+do over ar_character;
+ varname=vname(ar_character);
+ varn=_i_;
+ if missing(ar_character) then catn=0;
+ else catn=2;
+ if varname ne "varname" then output;
+end;
+format catn catnf.;
+keep varname obs catn;
+run;
+ 
+data nullmap2;
+set nullmap;
+if 0 then set position(keep=Variable Num);
+if _N_ =1 then do;
+  declare hash h1(dataset:"position");
+  h1.definekey("Variable");
+  h1.definedata("Num");
+  h1.definedone();
+end;
+Variable=varname;
+if h1.find() ne 0 then call missing(Num);
+if ^missing(Num);
+run;
+proc sort data=nullmap2;
+by num obs;
+run;
+ 
+data mapping;
+length ID Show FillColor Value $20.;
+ID="catn";
+Show="AttrMap"; 
+do Value ="Null","Numeric","Charcter";
+ select(Value);
+  when("Null") FillColor="gray";
+  when("Numeric") FillColor="bibg";
+  when("Charcter") FillColor="pink";
+ end;
+ output;
+end;
+run;
+ 
+ods graphics / reset
+               noborder
+               noscale
+               width=1100 px
+               height=700 px
+               attrpriority=none
+               imagefmt=png;
+proc sgplot data=nullmap2 dattrmap=mapping ; 
+   format catn catnf.;
+   heatmapparm x=varname  y=obs colorgroup=catn /  attrid=catn x2axis;
+   x2axis;
+   yaxis reverse label="Observation";
+   keylegend / title="Type" location=outside position=right across=1;                          
+run;
 
-Macro: SG029
-Purpose: Heatmap of missing data patterns.
-
-  
+~~~
 ---
  
 ## `%sg030()` macro <a name="sg030-macro-30"></a> ######
