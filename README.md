@@ -770,7 +770,7 @@ run;
   
 ---
  
-## `%sg012()` <a name="sg012-macro-13"></a> ######
+## `%sg012` <a name="sg012-macro-13"></a> ######
 ### Scatter plot of individual values and overall mean plus-minus SD by visit.
 
 <img width="501" height="267" alt="image" src="https://github.com/user-attachments/assets/b134fd3c-8d5e-4d8b-8160-e280860f8f75" />
@@ -1121,43 +1121,360 @@ run ;
   
 ---
  
-## `%sg016()` macro <a name="sg016-macro-17"></a> ######
+## `%sg016` <a name="sg016-macro-17"></a> ######
+### Reverse Kaplan-Meier plot of follow-up distribution over time.
 
-Macro: SG016
-Purpose: Reverse Kaplan-Meier plot of follow-up distribution over time.
+<img width="486" height="325" alt="image" src="https://github.com/user-attachments/assets/8e008a01-8ffe-49af-bd23-f483e26ef658" />
 
+~~~sas
+data dummy_adtte;
+attrib
+USUBJID label="Unique Subject Identifier" length=$20.
+TRTP  label="Planned Treatment" length=$20.
+TRTPN label="Planned Treatment (N)" length=8.
+PARAM  label="Parameter" length=$50.
+PARAMCD label="Parameter Code" length=$20.
+PARAMN  label="Parameter (N)" length=8.
+AVAL  label="Analysis Value" length=8.
+CNSR  label="Censor" length=8.
+;
+call streaminit(1982);
+do TRTPN = 1 to 2;
+do _USUBJID = 1 to 100;
+do PARAMN = 1 to 1;
+if TRTPN =1 then time =rand("WEIBULL", 1.5, 10);
+else if TRTPN =2 then time =rand("WEIBULL", 1.5, 7);
+else if TRTPN =3 then time =rand("WEIBULL", 1.5, 3);
+else time =rand("WEIBULL", 1.5, 5);
+USUBJID = cats(TRTPN,_USUBJID);
+censor_limit = rand("UNIFORM") * 15;
+CNSR = ^(time <= censor_limit);
+AVAL = min(time, censor_limit);
+TRTP = choosec(TRTPN,"Active","Placebo","ZZZZZ","Placebo");
+PARAMCD = choosec(PARAMN,"PFS");
+PARAM = choosec(PARAMN,"Progression Free Survival (Months)");
+output;
+end;
+end;
+end;
+keep USUBJID -- CNSR;
+run;
+proc sort data=dummy_adtte(keep=TRTP TRTPN) out=group_fmt nodupkey;
+by TRTP TRTPN;
+run;
+data group_fmt;
+set group_fmt;
+FMTNAME = "$KM_GR";
+START = cats(TRTPN);
+LABEL = TRTP;
+run;
+proc format cntlin=group_fmt;
+run;
+ods graphics on;
+ods noresults;
+ods select none;
+ods output Survivalplot=SurvivalPlotData;
+proc lifetest data=dummy_adtte plots=survival(atrisk=0 to 15 by 1);
+time AVAL * CNSR(1);
+strata TRTPN ;
+run;
+proc sort data=SurvivalPlotData(keep = Stratum) out=Stratum nodupkey;
+by Stratum;
+run;
+proc sort data=SurvivalPlotData(keep = tAtRisk) out=tAtRisk nodupkey;
+where ^missing(tAtRisk);
+by tAtRisk;
+run;
+data atrisk;
+set Stratum;
+if _N_=1 then do;
+  declare hash h1(dataset:"SurvivalPlotData(keep=Stratum tAtRisk)");
+  h1.definekey("Stratum","tAtRisk");
+  h1.definedone();
+end;
+do i=1 to obs;
+  set tAtRisk nobs=obs point=i;
+  AtRisk=0;
+  if h1.check() ne 0 then output;
+end;
+run;
+data SurvivalPlotData_1;
+set SurvivalPlotData atrisk;
+if ^missing(survival) then r_survival = 1 - survival;
+ 
+if ^missing(Censored) then do;
+  r_Censored = 1- Censored; 
+  tick_marks_upper = r_Censored + 0.02;
+  tick_marks_lower = r_Censored - 0.02;
+end;
+run;
+ 
+ 
+ods graphics / reset
+               noborder
+               noscale
+               width=745 px
+               height=510 px
+               attrpriority=none
+               imagefmt=png
+;
+ods results;
+ods select all;
+proc sgplot data=SurvivalPlotData_1 noborder noautolegend ;
+  styleattrs datacontrastcolors=(blue red )
+  datalinepatterns=(solid solid) ;
+ 
+step x=time y=r_survival / group=stratum name="step" lineattrs=(thickness=2);
+scatter x=time y=r_censored /noerrorcaps yerrorupper=tick_marks_upper yerrorlower=tick_marks_lower errorbarattrs=(pattern=1 thickness=2) markerattrs=(size=0) GROUP=stratum;
+ 
+xaxistable atrisk / x=tatrisk class=stratum location=outside colorgroup=stratum valueattrs=(size=10 ) ;
+keylegend "step" / location=inside position=bottomright across=1 noborder valueattrs=(size=10) exclude=("") ;
+yaxis label="Probability" min=0 values=(0 0.2 0.4 0.5 0.6 0.8 1.0 ) offsetmax=0.03;
+xaxis label="Survival Time (Month)" values=(0 to 15 by 1) offsetmin=0.04 ;
+format stratum $KM_GR. ;
+run;
+
+~~~
   
 ---
  
-## `%sg017()` macro <a name="sg017-macro-18"></a> ######
+## `%sg017`  <a name="sg017-macro-18"></a> ######
+### Box plot of analysis values over visits by treatment group.
 
-Macro: SG017
-Purpose: Box plot of analysis values over visits by treatment group.
+<img width="498" height="268" alt="image" src="https://github.com/user-attachments/assets/ceea8028-de4e-485c-bce1-e6d01b6172c0" />
 
+~~~sas
+data wk1;
+call streaminit(777);
+do TRTAN=1,2;
+    do AVISITN= 1 to 5;
+        do i = 1 to 100;
+            subjid=cats(trtan,"-",i);
+            if trtan=1 then AVAL = rand("normal",110,3);
+            else AVAL = rand("normal",100,2);
+            if rand("UNIFORM") <0.01 then AVAL = rand("normal",120,30);
+            output;
+        end;
+    end;
+end;
+run;
+ 
+proc format ;
+value TRTAN 1="Active" 2="Placebo";
+run;
+ 
+ods graphics / reset
+               noborder
+               noscale
+               width=780 px
+               height=410 px
+               attrpriority=none
+               imagefmt=png
+;
+proc sgplot data=wk1 noautolegend noborder;
+    styleattrs datacontrastcolors=(black black)
+                  datacolors=(white gray);
+    vbox AVAL / category=AVISITN group=TRTAN name="vbox"
+    meanattrs= (symbol = circle size=7)
+    outlierattrs=(symbol = plus size=7)
+;
+ 
+    keylegend "vbox"/title=""  location=inside position=topright across=1 noborder;
+ 
+    xaxis offsetmin=0.1 offsetmax=0.1 values=(1 to 5 ) labelattrs=(size=10) label="Analisys Visit" type=discrete;
+    yaxis  offsetmax=0.05 labelattrs=(size=10) values=(80 to 130 by 10) label ="Analysis Value";
+format TRTAN TRTAN.;
+run ;
+~~~
   
 ---
  
-## `%sg018()` macro <a name="sg018-macro-19"></a> ######
+## `%sg018`  <a name="sg018-macro-19"></a> ######
+### Box plot with overlaid beeswarm points.
 
-Macro: SG018
-Purpose: Box plot with overlaid beeswarm points.
+<img width="491" height="259" alt="image" src="https://github.com/user-attachments/assets/f77141bc-5c2f-4263-bdc9-6996b4fc9b0b" />
 
+~~~sas
+data wk1;
+call streaminit(777);
+do TRTAN=1,2;
+    do AVISITN= 1 to 3;
+        do i = 1 to 100;
+            subjid=cats(trtan,"-",i);
+            if trtan=1 then AVAL = rand("normal",110,3);
+            else AVAL = rand("normal",100,2);
+            if rand("UNIFORM") <0.01 then AVAL = rand("normal",120,30);
+            output;
+        end;
+    end;
+end;
+run;
+ 
+proc format ;
+value TRTAN 1="Active" 2="Placebo";
+run;
+ 
+ods graphics / reset
+               noborder
+               noscale
+               width=780 px
+               height=410 px
+               attrpriority=none
+               imagefmt=png
+;
+proc sgplot data=wk1 noautolegend noborder;
+    styleattrs datacontrastcolors=(black black)
+                  datacolors=(white gray);
+    vbox AVAL / category=AVISITN group=TRTAN groupdisplay=cluster  clusterwidth=0.8 name="vbox" nooutliers
+    meanattrs= (symbol = diamondFilled size=7)
+;
+  scatter x=AVISITN y=AVAL / group=TRTAN  groupdisplay=cluster  clusterwidth=0.8  name="sp1"
+              transparency=0.5 jitter markerattrs=(symbol=circle size=5)
+              ;
+ 
+    keylegend "vbox"/title=""  location=inside position=topright across=1 noborder;
+ 
+    xaxis offsetmin=0.2 offsetmax=0.2 values=(1 to 3 ) labelattrs=(size=10) label="Analisys Visit" type=discrete;
+    yaxis  offsetmax=0.1 offsetmin=0.1  labelattrs=(size=10) values=(90 to 120 by 10) label ="Analysis Value";
+format TRTAN TRTAN.;
+run ;
+~~~
+
+---
+ 
+## `%sg019`  <a name="sg019-macro-20"></a> ######
+### Violin plot of distribution by group.
+
+<img width="382" height="328" alt="image" src="https://github.com/user-attachments/assets/9707ae5a-c770-4a86-bd16-e6a375059db4" />
+
+~~~sas
+data wk1;
+do TRT01PN = 1 to 2;
+ if  TRT01PN = 1 then do;
+  do id=1 to 200;
+          SUBJID = cats(TRT01PN,"-",id);
+          AVAL=rand("normal",10,5) ;
+          output;
+  end;
+  do id=201 to 400;
+          SUBJID = cats(TRT01PN,"-",id);
+          AVAL=rand("normal",23,6);
+          output;
+  end;
+ end;
+ if  TRT01PN = 2 then do;
+  do id=1 to 300;
+          SUBJID = cats(TRT01PN,"-",id);
+          AVAL=rand("normal",7,5) ;
+          output;
+  end;
+  do id=301 to 400;
+          SUBJID = cats(TRT01PN,"-",id);
+          AVAL=rand("normal",18,6);
+          output;
+  end;
+ end;
+end;
+run;
+ 
+proc kde data = wk1;
+univar AVAL /out=wk2 ;
+by TRT01PN;
+run;
+ 
+data sds;
+  set wk2;
+    mirror = -density;
+run;
+ 
+proc format ;
+value TRT01PN 1="Active" 2="Placebo";
+run;
+ 
+ods graphics / reset
+               noborder
+               noscale
+               width=580 px
+               height=510 px
+               attrpriority=none
+               imagefmt=png
+;
+proc sgplot data=sds noautolegend noborder;
+band y=value upper=density lower=mirror /  fill outline group=TRT01PN transparency=0.6 lineattrs=(pattern=solid) name="band";
+xaxis values=(-0.1 to 0.1 by 0.02 ) ;
+keylegend "band"/title=""  location=inside position=topright across=1 noborder;
+format TRT01PN TRT01PN.;
+run;
+
+~~~
   
 ---
  
-## `%sg019()` macro <a name="sg019-macro-20"></a> ######
+## `%sg020`  <a name="sg020-macro-21"></a> ######
+### Raincloud plot showing distribution, box summary, and individual values.
 
-Macro: SG019
-Purpose: Violin plot of distribution by group.
+<img width="507" height="292" alt="image" src="https://github.com/user-attachments/assets/484532b5-e21f-4604-bdf8-21e2d086e4ed" />
 
-  
----
+~~~sas
+data wk1;
+call streaminit(1080);
+do id=1 to 200;
+        SUBJID = cats(id);
+        AVAL=rand("normal",10,5);
+        output;
+end;
+do id=201 to 400;
+        SUBJID = cats(id);
+        AVAL=rand("normal",30,5);
+        output;
+end;
  
-## `%sg020()` macro <a name="sg020-macro-21"></a> ######
+run;
+proc kde data = wk1;
+   univar AVAL / out = kde;
+run;
+data sds;
+   set kde wk1;
+run; 
+ 
+options orientation=landscape;
+ods graphics / reset
+               noborder
+               noscale
+               width=780 px
+               height=410 px
+               attrpriority=none
+               imagefmt=png
+;
+proc template;
+   define statgraph RCP;
+      begingraph;
+         layout overlay
+            / xaxisopts = (label      = " "
+                           type       = linear
+                           linearopts = (viewmin = -20
+                                         viewmax = 60
+                                         tickvaluesequence = (start = -20 end = 60 increment = 10)))
+              yaxisopts = (label = " ")
+              walldisplay=none
+              ;
+            bandplot x = value limitlower = 0 limitupper = density
+               / display = (fill) ;
+            boxplot y = aval x = eval(-0.02 + coalesce(0, aval))
+               / orient   = horizontal
+                 boxwidth = 0.3
+                 ;
+            scatterplot x = aval y = eval(-0.05 + 0.01*cdf("NORMAL", rannor(1234)) + coalesce(0, aval))
+               / markerattrs = (symbol = circle size = 8 transparency = 0.4)
+                 ;
+         endlayout;
+      endgraph;
+   end;
+run;
+proc sgrender data = sds template = RCP ;
+run;
 
-Macro: SG020
-Purpose: Raincloud plot showing distribution, box summary, and individual values.
-
+~~~
   
 ---
  
